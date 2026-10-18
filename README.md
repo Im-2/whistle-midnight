@@ -5,6 +5,8 @@ Midnight Buildathon (AKINDO), Wave 2. License: Apache-2.0.
 
 An organisation keeps a private set of members. A member files a report against a case and proves *"I am a verified member"* without revealing which member. A per-case nullifier stops the same member reporting twice. Once N distinct verified members have reported the same case, the case flips to **CORROBORATED** on-chain. Nobody learns who reported; the public sees only case status and counts.
 
+**Live landing page:** https://whistle-midnight.vercel.app (static; the app itself runs on your own machine, see [Run it locally](https://whistle-midnight.vercel.app/run-locally)).
+
 ## Problem and audience
 
 Internal reporting is either trusted but traceable (people stay silent) or anonymous but unverifiable (anyone can fake a report). Organisations cannot tell a genuine pattern from noise. Whistle gives them *corroboration without identification*.
@@ -206,6 +208,11 @@ for (const [caseId, info] of l.cases) { /* info.threshold, info.reportCount, inf
 
 Indexer URLs per network are in `NETWORK_CONFIGS` (`api/network.ts`).
 
+## Roles and access
+
+- **In the demo, the admin and the members share one app.** The persona switcher (Admin, Alice, Bob, Carol) is a convenience so one machine can show the whole flow. The Admin screen says so in a banner.
+- **Real protection is cryptographic, not a login page.** Only the holder of the admin secret can pass the contract's admin check (registering members, opening cases), and only the holder of a case's private key can read that case's reports, because they are encrypted to it. Opening the Admin screen without the key reveals nothing.
+- **Wave 3:** a separate admin console gated by the admin key, a member-only app, and per-organisation key management.
 ## Encrypted report delivery
 
 The contract stores only a hash of each report, so on its own the admin could never read what was reported. Whistle closes that gap without changing the contract:
@@ -281,6 +288,7 @@ What the app does:
 Gateway endpoints (all JSON): `GET /api/info`, `GET /api/status`, `GET /api/members`, `GET /api/personas` (creates alice, bob and carol on first call and reports whether each is registered), `POST /api/deploy`, `POST /api/members {name}`, `POST /api/register {who}`, `POST /api/cases {label, threshold}`, `GET /api/case-key?label=`, `GET /api/inbox?label=` (the admin inbox), `POST /api/report {member, label, ciphertext}` (the browser encrypts first; the response includes the `chain` diff). Errors return `{ error, code }` where `code` is a `WhistleErrorCode`.
 
 The exact click path for the demo video is in [docs/DEMO.md](docs/DEMO.md). `npm run demo:reset` gives a fresh local devnet and clears saved state.
+**Public static site.** The landing page is deployed as a static site on Vercel at https://whistle-midnight.vercel.app. It is built with `VITE_PUBLIC_SITE=true` (`npm run web:build:public`), which leaves out the app entirely: the deployed bundle has no `/app` code and nothing that calls a gateway. "Launch app" goes to a "Run it locally" page with the three-step judge path. The build output was audited before deploying (no tokens, keys, seeds, Blockfrost IDs, gateway URLs or hex strings, and `.env` and `.whistle/` are untracked). The gateway, the devnet and anything that holds keys are never deployed.
 Landing page notes: smooth scroll with Lenis and scroll choreography with GSAP ScrollTrigger; fonts (Anton, Inter) are self-hosted via `@fontsource`; images are optimised WebP under 300 KB each. It respects `prefers-reduced-motion` (no pinning or parallax, plain fades) and drops pinning on phones. Every number on the page comes from this repository (25 tests, 3 circuits); there are no testimonials or invented statistics.
 ## Roadmap (Wave 3, not built)
 
@@ -295,6 +303,8 @@ Wave 2 delivers: the Compact contract, 37 passing tests, CI, encrypted report de
 Apache-2.0 (see [LICENSE](LICENSE)). The membership-plus-nullifier pattern follows the public Midnight examples `PrivateVoting.compact` (midnightntwrk/midnight-expert) and `election.compact` (LFDT-Minokawa/compact); the case, threshold and corroboration logic is original. Devnet and wallet wiring in `api/network.ts`, `api/wallet.ts`, `api/wallet-state.ts` and `docker-compose.yml` is adapted from the Midnight `create-mn-app` hello-world template.
 
 Repository topics: `midnightntwrk`, `midnight`, `compact`, `zero-knowledge`.
+
+
 
 
 
