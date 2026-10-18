@@ -122,7 +122,7 @@ npm run typecheck
 
 ## API reference
 
-All functions are exported from `api/index.ts`. 32-byte values cross the API boundary as 64-character lowercase **hex strings** (`Hex32`). Every failure is a `WhistleError` with a `code` (`NOT_ADMIN`, `NOT_MEMBER`, `ALREADY_REPORTED`, `UNKNOWN_CASE`, `CASE_EXISTS`, `BAD_THRESHOLD`, `NO_FUNDS`, `NETWORK`, `UNKNOWN`) so a UI can branch on the code instead of parsing text.
+All functions are exported from `api/index.ts`. 32-byte values cross the API boundary as 64-character lowercase **hex strings** (`Hex32`). Every failure is a `WhistleError` with a `code` (`NOT_ADMIN`, `NOT_MEMBER`, `ALREADY_REPORTED`, `UNKNOWN_CASE`, `CASE_EXISTS`, `BAD_THRESHOLD`, `NO_FUNDS`, `NETWORK`, `NOT_DEPLOYED`, `UNKNOWN`) so a UI can branch on the code instead of parsing text.
 
 ### Reads (no wallet, no secrets)
 
@@ -134,9 +134,14 @@ PublicState = {
   adminCommitment: Hex32,
   reportsFiled: number,     // report hashes recorded
   nullifiersUsed: number,   // distinct member-case reports
+  nullifiers: Hex32[],      // the spent nullifiers themselves (public)
+  reportHashes: Hex32[],    // SHA-256 of each filed report (public)
   cases: { label, caseId: Hex32, threshold, reportCount, status: 'OPEN' | 'CORROBORATED' }[]
 }
 ```
+
+`membershipOf({ network, contractAddress }, commitments) → Promise<Record<Hex32, boolean>>`
+Which member commitments are in the on-chain member tree right now (from public state; no wallet).
 
 `readCase({ network, contractAddress }, caseLabel) → Promise<CaseView | undefined>`
 One case by label, or `undefined`.
@@ -247,8 +252,19 @@ npm run web:dev          # terminal 2: Vite on http://localhost:5173 (proxies /a
 
 **The gateway and the trust model.** The app never talks to the chain directly. `gateway/index.ts` is a thin HTTP wrapper over the API layer (`api/`): it holds the fee wallet and the demo identity files in `.whistle/`, and it builds the zero-knowledge proofs. It listens on `127.0.0.1` only and rejects browser requests from non-local origins. Because it runs on the user's own machine, member secrets never leave that machine, which keeps the anonymity claim honest. A *hosted* gateway would see secrets and IP addresses and would break it; the roadmap replaces the gateway with in-wallet proving through the Lace DApp connector.
 
-Gateway endpoints (all JSON): `GET /api/status`, `GET /api/members`, `POST /api/members {name}`, `POST /api/register {who}`, `POST /api/cases {label, threshold}`, `POST /api/report {member, label, text}`. Errors return `{ error, code }` where `code` is a `WhistleErrorCode`.
+What the app does:
 
+- **Status bar:** network (Local devnet), contract address with a copy button, a live "updated Ns ago" indicator, and a **Deploy contract** button when nothing is deployed yet.
+- **Persona switcher:** Admin, Alice, Bob, Carol, so one machine can demo the whole flow. Picking a persona takes you to the screen it uses. Whether each member is registered is read from the chain.
+- **Public dashboard:** auto-refreshes every few seconds; each case has a status badge and a progress bar toward its threshold.
+- **Admin:** register a member (or paste a commitment) and open a case (pre-filled: `case-001`, threshold 3).
+- **Member:** the persona's identity and registration status, plus the report form.
+- **What the chain sees:** after every report, a panel shows what the public ledger actually changed (the new nullifier, the new report hash, the case count before and after, the totals). All of it is read back from the indexer before and after the transaction. Three checks are computed on the member's machine from their secret: the secret is not in anything the report wrote, the commitment is not in it either, and the nullifier is one only the secret holder can recompute.
+- **Plain-English states:** loading, empty and error messages on every screen (for example "Already reported on this case." and "Not a registered member."), mapped from the API layer's error codes.
+
+Gateway endpoints (all JSON): `GET /api/info`, `GET /api/status`, `GET /api/members`, `GET /api/personas` (creates alice, bob and carol on first call and reports whether each is registered), `POST /api/deploy`, `POST /api/members {name}`, `POST /api/register {who}`, `POST /api/cases {label, threshold}`, `POST /api/report {member, label, text}` (the response includes the `chain` diff). Errors return `{ error, code }` where `code` is a `WhistleErrorCode`.
+
+The exact click path for the demo video is in [docs/DEMO.md](docs/DEMO.md). `npm run demo:reset` gives a fresh local devnet and clears saved state.
 Landing page notes: smooth scroll with Lenis and scroll choreography with GSAP ScrollTrigger; fonts (Anton, Inter) are self-hosted via `@fontsource`; images are optimised WebP under 300 KB each. It respects `prefers-reduced-motion` (no pinning or parallax, plain fades) and drops pinning on phones. Every number on the page comes from this repository (25 tests, 3 circuits); there are no testimonials or invented statistics.
 ## Roadmap (Wave 3, not built)
 
@@ -263,5 +279,6 @@ Wave 2 delivers: the Compact contract, 25 passing tests, CI, the TypeScript API 
 Apache-2.0 (see [LICENSE](LICENSE)). The membership-plus-nullifier pattern follows the public Midnight examples `PrivateVoting.compact` (midnightntwrk/midnight-expert) and `election.compact` (LFDT-Minokawa/compact); the case, threshold and corroboration logic is original. Devnet and wallet wiring in `api/network.ts`, `api/wallet.ts`, `api/wallet-state.ts` and `docker-compose.yml` is adapted from the Midnight `create-mn-app` hello-world template.
 
 Repository topics: `midnightntwrk`, `midnight`, `compact`, `zero-knowledge`.
+
 
 

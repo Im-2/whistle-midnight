@@ -16,7 +16,8 @@
     "web:dev": "vite web",
     "web:build": "vite build web",
     "build": "npm run typecheck && npm run web:build",
-    "start": "npm run web:build && npm run gateway"
+    "start": "npm run web:build && npm run gateway",
+    "demo:reset": "docker compose down -v && docker compose up -d --wait && rm -rf .whistle .midnight-state.json midnight-level-db midnight-level-db-* .midnight-wallet-state/undeployed"
   },
   "dependencies": {
     "@fontsource/anton": "^5.3.0",

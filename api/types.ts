@@ -28,6 +28,10 @@ export interface PublicState {
   reportsFiled: number;
   /** Number of spent nullifiers (= distinct member-case reports). */
   nullifiersUsed: number;
+  /** The spent nullifiers themselves (public; each is unlinkable to a member without that member's secret). */
+  nullifiers: Hex32[];
+  /** SHA-256 hashes of the filed reports (public; the report text never goes on-chain). */
+  reportHashes: Hex32[];
   cases: CaseView[];
 }
 
@@ -45,6 +49,7 @@ export type WhistleErrorCode =
   | 'BAD_THRESHOLD'
   | 'NO_FUNDS'
   | 'NETWORK'
+  | 'NOT_DEPLOYED'
   | 'UNKNOWN';
 
 /** Every API failure is a WhistleError so a UI can branch on `code` instead of parsing text. */
@@ -61,8 +66,8 @@ export class WhistleError extends Error {
 
 const ASSERTIONS: [RegExp, WhistleErrorCode, string][] = [
   [/Not admin/, 'NOT_ADMIN', 'Only the admin can do this.'],
-  [/Not a verified member|Merkle path is not for this member/, 'NOT_MEMBER', 'This identity is not a registered member.'],
-  [/Already reported this case/, 'ALREADY_REPORTED', 'This member has already reported this case.'],
+  [/Not a verified member|Merkle path is not for this member/, 'NOT_MEMBER', 'Not a registered member.'],
+  [/Already reported this case/, 'ALREADY_REPORTED', 'Already reported on this case.'],
   [/Unknown case/, 'UNKNOWN_CASE', 'That case does not exist.'],
   [/Case already exists/, 'CASE_EXISTS', 'A case with that label already exists.'],
   [/Threshold must be positive/, 'BAD_THRESHOLD', 'The threshold must be at least 1.'],
