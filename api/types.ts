@@ -50,6 +50,7 @@ export type WhistleErrorCode =
   | 'NO_FUNDS'
   | 'NETWORK'
   | 'NOT_DEPLOYED'
+  | 'NO_CASE_KEY'
   | 'UNKNOWN';
 
 /** Every API failure is a WhistleError so a UI can branch on `code` instead of parsing text. */

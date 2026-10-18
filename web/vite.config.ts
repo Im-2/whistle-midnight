@@ -4,5 +4,6 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
-  server: { proxy: { '/api': 'http://localhost:8787' } },
+  // The shared crypto module lives in ../api, outside the Vite root.
+  server: { proxy: { '/api': 'http://localhost:8787' }, fs: { allow: ['..'] } },
 });

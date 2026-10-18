@@ -11,3 +11,5 @@ export {
   type CaseView, type CaseStatusName, type PublicState, type TxReceipt, type NetworkId, type Hex32, type WhistleErrorCode,
 } from './types.js';
 export { NETWORK_CONFIGS, getDeployment, recordDeployment } from './network.js';
+export { generateCaseKeypair, encryptReport, decryptReport, hashCiphertext, type CaseKeypair } from './report-crypto.js';
+export { ReportStore, type InboxView, type InboxEntry, type InboxStatus, type StoredReport } from './inbox.js';

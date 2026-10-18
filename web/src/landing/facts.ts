@@ -2,8 +2,8 @@
 // Numbers shown on the landing page. Each one is real and comes from the repo; none is invented.
 // Re-verify before submission: `npm test` (tests) and contract/src/whistle.compact (exported circuits).
 export const FACTS = {
-  /** `npm test`: 14 simulator tests + 11 API-layer tests. */
-  tests: 25,
+  /** `npm test`: 14 simulator tests + 11 API-layer tests + 12 encrypted-report tests. */
+  tests: 37,
   /** Exported circuits in contract/src/whistle.compact: registerMember, openCase, fileReport. */
   circuits: 3,
   /** HistoricMerkleTree<10, Bytes<32>>: 2^10 member slots. */

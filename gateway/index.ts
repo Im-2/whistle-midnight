@@ -12,7 +12,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  FileKeyStore, WhistleClient, WhistleError, commitmentFor, generateSecret, getDeployment, membershipOf, nullifierFor,
+  FileKeyStore, ReportStore, WhistleClient, WhistleError, commitmentFor, generateCaseKeypair, generateSecret, getDeployment, hashCiphertext, membershipOf, nullifierFor,
   readPublicState, recordDeployment, toWhistleError, type Hex32, type NetworkId, type PublicState,
 } from '../api/index.js';
 
@@ -22,6 +22,8 @@ const port = Number(process.env.PORT ?? 8787);
 const network = (process.env.WHISTLE_NETWORK ?? 'undeployed') as NetworkId;
 const networkLabel = network === 'undeployed' ? 'Local devnet' : network === 'preprod' ? 'Preprod' : 'Preview';
 const keys = new FileKeyStore(path.join(root, '.whistle'));
+// Per-case encryption keys and the local ciphertext store (demo scope: see README threat model).
+const reports = new ReportStore(network, path.join(root, '.whistle'));
 
 /** The demo personas. Their identities are created on first use and kept in .whistle/members/. */
 const PERSONAS = [
@@ -173,9 +175,22 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && url.pathname === '/api/status') {
       const s = await statusOrNull();
-      return json(res, 200, s ? { deployed: true, networkLabel, ...s } : { deployed: false, network, networkLabel, cases: [] });
+      return json(res, 200, s ? { deployed: true, networkLabel, ...s, cases: s.cases.map((c) => ({ ...c, encrypted: reports.publicKey(c.label) !== undefined })) } : { deployed: false, network, networkLabel, cases: [] });
     }
     if (req.method === 'GET' && url.pathname === '/api/members') return json(res, 200, { members: keys.listMembers() });
+    if (req.method === 'GET' && url.pathname === '/api/case-key') {
+      const label = clean(url.searchParams.get('label'), 32);
+      const publicKey = label ? reports.publicKey(label) : undefined;
+      if (!publicKey) return json(res, 404, { error: 'This case has no encryption key, so reports cannot be delivered encrypted. Ask the admin to open the case from the app.', code: 'NO_CASE_KEY' });
+      return json(res, 200, { label, publicKey });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/inbox') {
+      // Admin's Reports inbox. The view is built only from stored ciphertexts and the case key: it holds no sender information.
+      const label = clean(url.searchParams.get('label'), 32);
+      if (!label) return bad(res, 'Choose a case.');
+      const s = await statusOrNull();
+      return json(res, 200, await reports.inbox(label, s?.reportHashes ?? []));
+    }
     if (req.method === 'GET' && url.pathname === '/api/personas') {
       ensurePersonas(); // idempotent: creates alice, bob and carol the first time
       const members = new Map(keys.listMembers().map((m) => [m.name, m.commitment]));
@@ -222,19 +237,32 @@ const server = http.createServer(async (req, res) => {
           const threshold = Number(b.threshold);
           if (!label || !Number.isInteger(threshold) || threshold < 1) return bad(res, 'Give a case label and a threshold of at least 1.');
           const address = needAddress();
-          return json(res, 200, await serial(async () => (await getClient()).openCase(address, keys.adminSecret(network), label, threshold)));
+          // A keypair is made for the case before it opens. The private key stays in .whistle/ on this machine.
+          // An existing key is never replaced (opening a case that already exists must not orphan its reports).
+          const createdKeys = reports.saveCaseKeys(label, await generateCaseKeypair());
+          try {
+            return json(res, 200, await serial(async () => (await getClient()).openCase(address, keys.adminSecret(network), label, threshold)));
+          } catch (e) {
+            if (createdKeys) reports.deleteCaseKeys(label);
+            throw e;
+          }
         }
         case '/api/report': {
           const member = clean(b.member, 32);
           const label = clean(b.label, 32);
-          const text = clean(b.text, 2000);
-          if (!member || !label || !text) return bad(res, 'Member, case and report text are all required.');
+          const ciphertext = clean(b.ciphertext, 16_000);
+          if (!member || !label || !ciphertext) return bad(res, 'Member, case and an encrypted report are all required.');
+          if (!/^[A-Za-z0-9+/]+={0,2}$/.test(ciphertext)) return bad(res, 'The report must be sent encrypted.');
+          if (!reports.publicKey(label)) throw new WhistleError('NO_CASE_KEY', 'This case has no encryption key, so reports cannot be delivered encrypted. Ask the admin to open the case from the app.');
+          const hash = await hashCiphertext(ciphertext); // computed here: the on-chain hash is always of the ciphertext we hold
           const address = needAddress();
           const secret = keys.memberSecret(member);
           const out = await serial(async () => {
             const before = await statusOrNull();
             if (!before) throw new WhistleError('NETWORK', 'Cannot read the chain.');
-            const r = await (await getClient()).fileReport(address, secret, label, { text });
+            const r = await (await getClient()).fileReport(address, secret, label, { hash });
+            // Stored under its on-chain hash. The sender is not recorded anywhere with the ciphertext.
+            reports.saveReport(label, hash, ciphertext);
             return { r, chain: await chainDiff(before, label, secret) };
           });
           return json(res, 200, { ...out.r, chain: out.chain });

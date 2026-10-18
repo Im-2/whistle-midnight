@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Client for the local gateway (gateway/index.ts), which wraps the API layer in ../../../api.
-export type CaseRow = { label: string; caseId: string; threshold: number; reportCount: number; status: 'OPEN' | 'CORROBORATED' };
+export type CaseRow = { label: string; caseId: string; threshold: number; reportCount: number; status: 'OPEN' | 'CORROBORATED'; /** true when reports for this case can be delivered encrypted */ encrypted?: boolean };
 
 export type Status =
   | { deployed: false; network: string; networkLabel: string; cases: CaseRow[] }
@@ -31,6 +31,9 @@ export type ChainDiff = {
   newReportHashes: string[];
   checks: { nullifierIsYours: boolean; secretInDelta: boolean; commitmentInDelta: boolean };
 };
+export type InboxEntry = { order: number; filedAt: string; status: 'verified' | 'unconfirmed' | 'tampered' | 'unreadable'; text: string | null };
+/** The admin's inbox for a case. By design it carries no sender information. */
+export type Inbox = { caseLabel: string; hasKey: boolean; reports: InboxEntry[] };
 export type ReportResult = { txId: string; blockHeight: number; reportHash: string; chain: ChainDiff };
 
 export class ApiError extends Error {
@@ -61,5 +64,8 @@ export const api = {
   newMember: (name: string) => post<Member>('/api/members', { name }),
   register: (who: string) => post<{ commitment: string; txId: string }>('/api/register', { who }),
   openCase: (label: string, threshold: number) => post<{ txId: string }>('/api/cases', { label, threshold }),
-  report: (member: string, label: string, text: string) => post<ReportResult>('/api/report', { member, label, text }),
+  caseKey: (label: string) => call<{ label: string; publicKey: string }>(`/api/case-key?label=${encodeURIComponent(label)}`),
+  inbox: (label: string) => call<Inbox>(`/api/inbox?label=${encodeURIComponent(label)}`),
+  /** `ciphertext` is the report already encrypted to the case key in the browser; plaintext is never sent. */
+  report: (member: string, label: string, ciphertext: string) => post<ReportResult>('/api/report', { member, label, ciphertext }),
 };

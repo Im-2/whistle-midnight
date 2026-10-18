@@ -1,0 +1,8 @@
+/* Admin: Reports inbox. */
+.inbox__list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 12px; }
+.inbox__list li { background: #f1f1ee; border: 1px solid var(--line); border-left: 3px solid var(--ok); padding: 14px 16px; animation: rise .35s ease both; }
+.inbox__list li.inbox__warn { border-left-color: var(--err); }
+.inbox__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
+.inbox__meta strong { font: 400 20px/1 var(--display); letter-spacing: .03em; text-transform: uppercase; color: var(--ink); }
+.inbox__text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 1.55; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .inbox__list li { animation: none; } }

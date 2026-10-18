@@ -65,6 +65,9 @@ How `fileReport(caseId, reportHash)` works:
 - **Small member sets mean a small anonymity set.** With three members, "one of three" is weak.
 - **Registration is public.** The tree's leaves (commitments) are visible, so the member count is public.
 - Report **content** is never on-chain, only its hash. Whoever holds the text can prove they wrote it.
+- **An admin holding a case's private key can read every report for that case.** Encrypted delivery protects reports from everyone else (observers, the chain, anyone without the key), not from the admin it is addressed to. Whoever controls `.whistle/cases/` controls that.
+- **The words of a report can identify their author.** Nothing in the inbox says who sent a report, but a detail only one person knows can give them away. Members are warned in the app. The cryptography cannot fix this.
+- **Ciphertext storage is local in this version.** Encrypted reports are kept on the demo machine in `.whistle/`, keyed by the hash the contract stores. The on-chain hash is the integrity check, but availability depends on that machine. Storing ciphertext fully on-chain (or in decentralised storage) is Wave 3.
 
 ## Toolchain (verified against the Midnight support matrix, 2026-10-18)
 
@@ -100,7 +103,7 @@ Prerequisites: Node 22+, Docker running, Compact 0.31.1 (above).
 
 ```bash
 npm install
-npm test                      # compiles the contract, runs 25 tests (~10 s)
+npm test                      # compiles the contract, runs 37 tests (~10 s)
 
 npm run devnet:up             # local node + indexer + proof server in Docker
 npm run cli -- deploy         # deploys the contract (about 1-2 min)
@@ -118,11 +121,11 @@ npm test          # compile + vitest (simulator: runs the real compiled circuits
 npm run typecheck
 ```
 
-`test/whistle.test.ts` (14 simulator tests) covers: a valid member files (count 1); the same member twice on the same case is rejected; the same member on two cases is allowed; a non-member is rejected; a non-admin cannot register or open a case; the threshold flips status exactly at N and not before; a late-registered member can prove against historic roots; and **privacy**: the public state after a report contains neither the secret nor the commitment, and nullifiers across cases are unlinkable. `test/api.test.ts` (11 tests) covers the API layer: crypto helpers, that `nullifierFor` matches the nullifier the contract stores, assertion-to-error-code mapping, and the key store. CI (`.github/workflows/ci.yml`) runs all of it on every push.
+`test/whistle.test.ts` (14 simulator tests) covers: a valid member files (count 1); the same member twice on the same case is rejected; the same member on two cases is allowed; a non-member is rejected; a non-admin cannot register or open a case; the threshold flips status exactly at N and not before; a late-registered member can prove against historic roots; and **privacy**: the public state after a report contains neither the secret nor the commitment, and nullifiers across cases are unlinkable. `test/inbox.test.ts` (12 tests) covers encrypted report delivery (see below): round trip, wrong key, a ciphertext moved to another case, tampering, a ciphertext checked against the real contract's ledger hash, a missing private key, and that the inbox and the stored records contain no member identity or secret. `test/api.test.ts` (11 tests) covers the API layer: crypto helpers, that `nullifierFor` matches the nullifier the contract stores, assertion-to-error-code mapping, and the key store. CI (`.github/workflows/ci.yml`) runs all of it on every push.
 
 ## API reference
 
-All functions are exported from `api/index.ts`. 32-byte values cross the API boundary as 64-character lowercase **hex strings** (`Hex32`). Every failure is a `WhistleError` with a `code` (`NOT_ADMIN`, `NOT_MEMBER`, `ALREADY_REPORTED`, `UNKNOWN_CASE`, `CASE_EXISTS`, `BAD_THRESHOLD`, `NO_FUNDS`, `NETWORK`, `NOT_DEPLOYED`, `UNKNOWN`) so a UI can branch on the code instead of parsing text.
+All functions are exported from `api/index.ts`. 32-byte values cross the API boundary as 64-character lowercase **hex strings** (`Hex32`). Every failure is a `WhistleError` with a `code` (`NOT_ADMIN`, `NOT_MEMBER`, `ALREADY_REPORTED`, `UNKNOWN_CASE`, `CASE_EXISTS`, `BAD_THRESHOLD`, `NO_FUNDS`, `NETWORK`, `NOT_DEPLOYED`, `NO_CASE_KEY`, `UNKNOWN`) so a UI can branch on the code instead of parsing text.
 
 ### Reads (no wallet, no secrets)
 
@@ -203,6 +206,19 @@ for (const [caseId, info] of l.cases) { /* info.threshold, info.reportCount, inf
 
 Indexer URLs per network are in `NETWORK_CONFIGS` (`api/network.ts`).
 
+## Encrypted report delivery
+
+The contract stores only a hash of each report, so on its own the admin could never read what was reported. Whistle closes that gap without changing the contract:
+
+1. **Opening a case creates a keypair for it.** The public key is stored with the case; the private key stays on the admin's machine in `.whistle/cases/` (file mode `0600`, git-ignored, never logged).
+2. **A member's browser encrypts the report to the case public key before it goes anywhere.** The construction is a sealed box built from standard WebCrypto primitives (ephemeral X25519 key agreement, HKDF-SHA256, AES-256-GCM; see `api/report-crypto.ts`), with the case label bound in as additional data so a ciphertext cannot be moved to another case. The gateway and the chain never see the plaintext.
+3. **The contract still receives only a hash**, now `SHA-256(ciphertext)`, through the existing `fileReport` circuit. The membership proof and the per-case nullifier are unchanged.
+4. **The ciphertext is stored locally, keyed by that hash** (`.whistle/cases/<network>/…/reports/<hash>.json`). The record has no field for the sender.
+5. **The admin's Reports inbox** decrypts each stored ciphertext with the case key and verifies it: `SHA-256(ciphertext)` must equal the stored hash, and that hash must be on the ledger. A tampered ciphertext is flagged and its text withheld. The inbox shows the text, the case, the arrival order and the time, and nothing about the sender. If the private key is missing, it says so instead of showing anything.
+
+Honest scope: ciphertext storage is **local for the demo**; fully on-chain storage is Wave 3, as is publishing the case public key on-chain (it needs a contract field, and the contract is deliberately unchanged here). Reports filed from the CLI are hash-only and cannot be delivered; cases opened from the CLI have no key.
+
+API (in `api/index.ts`): `generateCaseKeypair()`, `encryptReport(casePublicKey, text, caseLabel) → { ciphertext, hash }`, `decryptReport(casePrivateKey, ciphertext, caseLabel) → text`, `hashCiphertext(ciphertext)`, and `ReportStore` (`saveCaseKeys`, `publicKey`, `hasPrivateKey`, `saveReport`, `reports`, `inbox(caseLabel, onChainHashes) → { caseLabel, hasKey, reports: [{ order, filedAt, status, text }] }`). Pass `{ hash }` to `client.fileReport` for an encrypted report.
 ## CLI
 
 ```bash
@@ -257,12 +273,12 @@ What the app does:
 - **Status bar:** network (Local devnet), contract address with a copy button, a live "updated Ns ago" indicator, and a **Deploy contract** button when nothing is deployed yet.
 - **Persona switcher:** Admin, Alice, Bob, Carol, so one machine can demo the whole flow. Picking a persona takes you to the screen it uses. Whether each member is registered is read from the chain.
 - **Public dashboard:** auto-refreshes every few seconds; each case has a status badge and a progress bar toward its threshold.
-- **Admin:** register a member (or paste a commitment) and open a case (pre-filled: `case-001`, threshold 3).
-- **Member:** the persona's identity and registration status, plus the report form.
+- **Admin:** register a member (or paste a commitment), open a case (pre-filled: `case-001`, threshold 3; opening it creates the case's encryption key), and read the **Reports inbox**: decrypted reports per case with no sender information.
+- **Member:** the persona's identity and registration status, plus the report form. The text is encrypted in the browser to the case key before it is sent, and the app confirms: "Your report was encrypted and sent. The admin can read it. Nobody can tell who sent it."
 - **What the chain sees:** after every report, a panel shows what the public ledger actually changed (the new nullifier, the new report hash, the case count before and after, the totals). All of it is read back from the indexer before and after the transaction. Three checks are computed on the member's machine from their secret: the secret is not in anything the report wrote, the commitment is not in it either, and the nullifier is one only the secret holder can recompute.
 - **Plain-English states:** loading, empty and error messages on every screen (for example "Already reported on this case." and "Not a registered member."), mapped from the API layer's error codes.
 
-Gateway endpoints (all JSON): `GET /api/info`, `GET /api/status`, `GET /api/members`, `GET /api/personas` (creates alice, bob and carol on first call and reports whether each is registered), `POST /api/deploy`, `POST /api/members {name}`, `POST /api/register {who}`, `POST /api/cases {label, threshold}`, `POST /api/report {member, label, text}` (the response includes the `chain` diff). Errors return `{ error, code }` where `code` is a `WhistleErrorCode`.
+Gateway endpoints (all JSON): `GET /api/info`, `GET /api/status`, `GET /api/members`, `GET /api/personas` (creates alice, bob and carol on first call and reports whether each is registered), `POST /api/deploy`, `POST /api/members {name}`, `POST /api/register {who}`, `POST /api/cases {label, threshold}`, `GET /api/case-key?label=`, `GET /api/inbox?label=` (the admin inbox), `POST /api/report {member, label, ciphertext}` (the browser encrypts first; the response includes the `chain` diff). Errors return `{ error, code }` where `code` is a `WhistleErrorCode`.
 
 The exact click path for the demo video is in [docs/DEMO.md](docs/DEMO.md). `npm run demo:reset` gives a fresh local devnet and clears saved state.
 Landing page notes: smooth scroll with Lenis and scroll choreography with GSAP ScrollTrigger; fonts (Anton, Inter) are self-hosted via `@fontsource`; images are optimised WebP under 300 KB each. It respects `prefers-reduced-motion` (no pinning or parallax, plain fades) and drops pinning on phones. Every number on the page comes from this repository (25 tests, 3 circuits); there are no testimonials or invented statistics.
@@ -272,13 +288,15 @@ Member revocation; an org onboarding flow; escrowed identity reveal to an ombuds
 
 ## What changed this wave
 
-Wave 2 delivers: the Compact contract, 25 passing tests, CI, the TypeScript API layer, the CLI verified end to end on the local devnet, and this documentation. The web app (Admin, Member and Public screens) and a landing page, connected to the contract end to end through the local gateway.
+Wave 2 delivers: the Compact contract, 37 passing tests, CI, encrypted report delivery, the TypeScript API layer, the CLI verified end to end on the local devnet, and this documentation. The web app (Admin, Member and Public screens) and a landing page, connected to the contract end to end through the local gateway.
 
 ## Attribution and license
 
 Apache-2.0 (see [LICENSE](LICENSE)). The membership-plus-nullifier pattern follows the public Midnight examples `PrivateVoting.compact` (midnightntwrk/midnight-expert) and `election.compact` (LFDT-Minokawa/compact); the case, threshold and corroboration logic is original. Devnet and wallet wiring in `api/network.ts`, `api/wallet.ts`, `api/wallet-state.ts` and `docker-compose.yml` is adapted from the Midnight `create-mn-app` hello-world template.
 
 Repository topics: `midnightntwrk`, `midnight`, `compact`, `zero-knowledge`.
+
+
 
 
 

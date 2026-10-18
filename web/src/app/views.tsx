@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useState } from 'react';
-import { api, type ReportResult } from './api';
+import { useEffect, useState } from 'react';
+import { encryptReport } from '../../../api/report-crypto';
+import { api, type Inbox, type ReportResult } from './api';
 import ChainPanel from './ChainPanel';
 import { short, useAction, useAgo, type Live } from './hooks';
 import { CopyButton, Notice, type PersonaId } from './ui';
@@ -156,8 +157,13 @@ export function MemberView({ live, persona, onPersona }: { live: Live; persona: 
               e.preventDefault();
               setResult(null);
               const r = await file.run(
-                () => api.report(persona, label, text),
-                (r) => `Report filed anonymously. Content hash ${short(r.reportHash)}.`,
+                async () => {
+                  // Encrypted here, in the browser, to this case's public key. The plaintext never goes to the gateway or the chain.
+                  const { publicKey } = await api.caseKey(label);
+                  const { ciphertext } = await encryptReport(publicKey, text.trim(), label);
+                  return api.report(persona, label, ciphertext);
+                },
+                () => 'Your report was encrypted and sent. The admin can read it. Nobody can tell who sent it.',
               );
               if (r) {
                 setResult({ r, caseLabel: label, who: me?.label ?? persona });
@@ -172,16 +178,18 @@ export function MemberView({ live, persona, onPersona }: { live: Live; persona: 
                 <option value="">Choose a case…</option>
                 {cases.map((c) => (
                   <option key={c.caseId} value={c.label}>
-                    {c.label} ({c.reportCount}/{c.threshold}{c.status === 'CORROBORATED' ? ', corroborated' : ''})
+                    {c.label} ({c.reportCount}/{c.threshold}{c.status === 'CORROBORATED' ? ', corroborated' : ''}){c.encrypted === false ? ' - no encryption key' : ''}
                   </option>
                 ))}
               </select>
             </label>
             <label>
-              What you saw (only a hash of this goes on-chain)
-              <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} required maxLength={2000} placeholder="Describe what you saw. This text never leaves your machine." />
+              What you saw (encrypted to the admin before it is sent; only a hash goes on-chain)
+              <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} required maxLength={2000} placeholder="Describe what you saw. It is encrypted in this page, so only the admin can read it." />
             </label>
-            <button disabled={file.busy || !label || !text.trim()}>File report</button>
+            <button disabled={file.busy || !label || !text.trim() || chosen?.encrypted === false}>File report</button>
+            {chosen?.encrypted === false && <p className="hint">This case was opened without an encryption key (for example from the CLI), so reports cannot be delivered. Ask the admin to open it from the app.</p>}
+            <p className="hint">Be careful what you write: the words themselves can identify their author.</p>
             {chosen?.status === 'CORROBORATED' && <p className="hint">This case is already corroborated, but more members can still add their report.</p>}
           </form>
         )}
@@ -303,7 +311,7 @@ export function AdminView({ live, persona, onPersona }: { live: Live; persona: P
           onSubmit={async (e) => {
             e.preventDefault();
             const name = label.trim();
-            const r = await open.run(() => api.openCase(name, threshold), () => `Case “${name}” is open.`);
+            const r = await open.run(() => api.openCase(name, threshold), () => `Case “${name}” is open. Its encryption key stays on this machine, so only you can read the reports.`);
             if (r) setLabel('');
             await refresh();
           }}
@@ -320,6 +328,100 @@ export function AdminView({ live, persona, onPersona }: { live: Live; persona: P
         </form>
         <Notice flash={open.flash} busy={open.busy} busyText={BUSY} />
       </div>
+
+      <ReportsInbox live={live} />
     </section>
+  );
+}
+
+/* ----------------------------------------------------------------- reports inbox */
+
+const STATUS_TEXT: Record<string, string> = {
+  verified: 'Matches its on-chain hash',
+  unconfirmed: 'Waiting for the chain to show its hash',
+  tampered: 'Altered: does not match its on-chain hash',
+  unreadable: 'Cannot be read',
+};
+
+/** The admin's Reports inbox: decrypted reports for one case, in arrival order, with no sender information. */
+function ReportsInbox({ live }: { live: Live }) {
+  const cases = live.status?.deployed ? live.status.cases : [];
+  const [label, setLabel] = useState('');
+  const [inbox, setInbox] = useState<Inbox | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const current = label || cases[0]?.label || '';
+  const count = cases.find((c) => c.label === current)?.reportCount ?? 0;
+
+  useEffect(() => {
+    if (!current) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const i = await api.inbox(current);
+        if (!cancelled) {
+          setInbox(i);
+          setError(null);
+        }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load the inbox.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    setLoading(true);
+    void load();
+    return () => {
+      cancelled = true;
+    };
+    // Reload when the chain's report count for this case changes.
+  }, [current, count]);
+
+  return (
+    <div className="card inbox">
+      <h2>Reports inbox</h2>
+      <p>
+        Reports are decrypted here with the case&rsquo;s private key, which stays on this machine. Nothing in this list says who sent a report.
+      </p>
+      {cases.length === 0 ? (
+        <div className="empty"><strong>No cases yet.</strong><span>Open a case above. Reports for it will appear here.</span></div>
+      ) : (
+        <>
+          <label>
+            Case
+            <select value={current} onChange={(e) => setLabel(e.target.value)}>
+              {cases.map((c) => (
+                <option key={c.caseId} value={c.label}>{c.label} ({c.reportCount} on-chain)</option>
+              ))}
+            </select>
+          </label>
+          {error && <p className="notice err" role="alert">{error}</p>}
+          {loading && !inbox && <div className="skeleton" aria-busy="true" />}
+          {inbox && !inbox.hasKey && (
+            <p className="notice err" role="alert">
+              The private key for this case is not on this machine, so its reports cannot be decrypted here. Reports stay encrypted; the key is kept in the .whistle folder of the machine that opened the case.
+            </p>
+          )}
+          {inbox && inbox.hasKey && inbox.reports.length === 0 && (
+            <div className="empty"><strong>No reports delivered yet.</strong><span>Reports appear here once a member files one on this case.</span></div>
+          )}
+          {inbox && inbox.reports.length > 0 && (
+            <ol className="inbox__list">
+              {inbox.reports.map((r) => (
+                <li key={r.order} className={r.status === 'verified' ? '' : 'inbox__warn'}>
+                  <div className="inbox__meta">
+                    <strong>Report {r.order}</strong>
+                    <span>{current}</span>
+                    <time dateTime={r.filedAt}>{new Date(r.filedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</time>
+                    <span className={`badge ${r.status === 'verified' ? 'corroborated' : 'open'}`}>{STATUS_TEXT[r.status]}</span>
+                  </div>
+                  {r.text !== null ? <p className="inbox__text">{r.text}</p> : <p className="hint">The text is withheld because it cannot be trusted or read.</p>}
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
+      )}
+    </div>
   );
 }

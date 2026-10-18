@@ -20,7 +20,7 @@ const SLIDES = [
       'Your member secret',
       'Which member filed a given report',
       'Your Merkle path, used only to build the proof',
-      'The text of your report',
+      'The text of your report: it is encrypted in your browser so only the admin can read it',
       'The admin secret, on the admin’s machine',
     ],
   },
@@ -32,6 +32,7 @@ const SLIDES = [
       'This demo runs a gateway on your own machine because that is where the trust boundary is. A hosted gateway would see your secret.',
       'Wallet and network metadata sit outside the zero-knowledge proof.',
       'A small member set means a small anonymity set.',
+      'The admin holding a case key can read every report for it, and the words themselves can identify their author.',
     ],
   },
 ] as const;

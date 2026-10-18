@@ -27,6 +27,8 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 - App v2 (2026-10-18/19): status bar (network, contract, Deploy button), persona switcher (Admin/Alice/Bob/Carol), What the chain sees panel (real before/after indexer reads), plain-English loading/empty/error states, auto-refresh dashboard with progress bars. API layer gained nullifiers/reportHashes in PublicState, membershipOf(), NOT_DEPLOYED code.
 - Full browser demo run on a fresh devnet: Deploy button 24 s; register Alice/Bob/Carol ~25 s each; open case-001 (threshold 3) 28 s; three reports 24-32 s each, case flipped to CORROBORATED on the third; duplicate report refused with 'Already reported on this case.'; unregistered, unknown case, duplicate case and bad input all returned plain-English errors. Click path in docs/DEMO.md.
 
+- Encrypted report delivery (branch encrypted-reports, started 17:04 WAT 2026-10-18): per-case X25519/HKDF/AES-GCM sealed box via WebCrypto (api/report-crypto.ts), encrypted in the browser, SHA-256(ciphertext) stored on-chain via the unchanged fileReport circuit, ciphertext stored locally by hash (api/inbox.ts), admin Reports inbox with integrity check and no sender info. Contract unchanged. 12 new tests (37 total). Browser run on a fresh devnet: 3 members reported, case corroborated, inbox showed 3 decrypted reports with no names; grep found no plaintext on disk or in the gateway log.
+
 ## Findings worth remembering
 - npm `overrides` pins one `onchain-runtime-v3@3.0.0`; otherwise circuits fail with "expected instance of StateValue".
 - Midnight-hosted Preprod endpoints (`*.preprod.midnight.network`) were shut down 2026-10-09 (HTTP 410). Preprod now needs Blockfrost: node `https://rpc.midnight-preprod.blockfrost.io`, indexer `https://midnight-preprod.blockfrost.io/api/v0`, WS `wss://midnight-preprod.blockfrost.io/api/v0/ws`, each with `?project_id=<token>` (the docs' form; the request said "?token", the docs say `project_id`).
@@ -51,6 +53,7 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 ## Working notes
 - Work happens in WSL at `~/whistle-midnight`; `scripts/` holds the WSL helper scripts. Docs are authored in the Windows folder and copied in by `scripts/wsl-commit.sh`.
 - Contract pattern credit: Midnight `PrivateVoting.compact` / `election.compact` examples (Apache-2.0).
+
 
 
 
