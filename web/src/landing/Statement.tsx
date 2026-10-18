@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useLayoutEffect, useRef } from 'react';
-import { FACTS } from './facts';
+import { APP_HREF, FACTS } from './facts';
 import { gsap } from './useSmoothScroll';
 
 // Words in `ACCENT` get the muted rose-brown tone once they fill in.
@@ -60,7 +60,7 @@ export default function Statement() {
             a one-time marker and a hash of the report ever reach the chain.
           </p>
           <div className="statement__cta">
-            <a className="btn btn--solid" href="/app">Launch app</a>
+            <a className="btn btn--solid" href={APP_HREF}>Launch app</a>
             <a className="btn btn--ghost" href={FACTS.readmeUrl}>Read the README</a>
           </div>
         </div>

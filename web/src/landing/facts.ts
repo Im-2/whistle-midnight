@@ -13,3 +13,9 @@ export const FACTS = {
   // Placeholder until the demo video is recorded.
   videoUrl: '#demo-video',
 } as const;
+
+/** True in the public static build (VITE_PUBLIC_SITE=true): no app and nothing that calls a gateway. */
+export const PUBLIC_SITE = import.meta.env.VITE_PUBLIC_SITE === 'true';
+
+/** Where "Launch app" points: the app on your own machine, or the "Run it locally" page on the public site. */
+export const APP_HREF = PUBLIC_SITE ? '/run-locally' : '/app';

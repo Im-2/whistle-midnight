@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useLayoutEffect, useRef } from 'react';
-import { FACTS } from './facts';
+import { APP_HREF, FACTS } from './facts';
 import { gsap, prefersReducedMotion } from './useSmoothScroll';
 
 export function Nav() {
@@ -26,7 +26,7 @@ export function Nav() {
         <a href="#chain">What the chain sees</a>
         <a href={FACTS.repoUrl} rel="noreferrer">Source</a>
       </nav>
-      <a className="btn btn--small" href="/app">LAUNCH APP</a>
+      <a className="btn btn--small" href={APP_HREF}>LAUNCH APP</a>
     </header>
   );
 }
@@ -68,7 +68,7 @@ export default function Hero() {
       </h1>
 
       <div className="hero__cta">
-        <a className="btn btn--solid" href="/app">Launch app</a>
+        <a className="btn btn--solid" href={APP_HREF}>Launch app</a>
         <a className="btn btn--ghost" href="#how">How it works</a>
       </div>
       </div>

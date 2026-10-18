@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { FACTS } from './facts';
+import { APP_HREF, FACTS } from './facts';
 
 export default function Footer() {
   return (
@@ -13,7 +13,7 @@ export default function Footer() {
           <h4>Project</h4>
           <a href={FACTS.repoUrl} rel="noreferrer">GitHub</a>
           <a href={FACTS.readmeUrl} rel="noreferrer">README</a>
-          <a href="/app">Launch app</a>
+          <a href={APP_HREF}>Launch app</a>
         </div>
         <div>
           <h4>Sections</h4>

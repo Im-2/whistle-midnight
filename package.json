@@ -17,7 +17,8 @@
     "web:build": "vite build web",
     "build": "npm run typecheck && npm run web:build",
     "start": "npm run web:build && npm run gateway",
-    "demo:reset": "docker compose down -v && docker compose up -d --wait && rm -rf .whistle .midnight-state.json midnight-level-db midnight-level-db-* .midnight-wallet-state/undeployed"
+    "demo:reset": "docker compose down -v && docker compose up -d --wait && rm -rf .whistle .midnight-state.json midnight-level-db midnight-level-db-* .midnight-wallet-state/undeployed",
+    "web:build:public": "VITE_PUBLIC_SITE=true vite build web --outDir dist-public --emptyOutDir && cp web/vercel.json web/dist-public/vercel.json"
   },
   "dependencies": {
     "@fontsource/anton": "^5.3.0",

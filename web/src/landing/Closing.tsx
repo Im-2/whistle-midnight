@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useLayoutEffect, useRef } from 'react';
-import { FACTS } from './facts';
+import { APP_HREF, FACTS } from './facts';
 import { gsap } from './useSmoothScroll';
 
 const COLS = 5;
@@ -62,7 +62,7 @@ export default function Closing() {
           anonymous report, or read how it is built.
         </p>
         <div className="closing__links">
-          <a className="btn btn--solid-light" href="/app">Launch app</a>
+          <a className="btn btn--solid-light" href={APP_HREF}>Launch app</a>
           <a className="btn btn--line" href={FACTS.repoUrl} rel="noreferrer">GitHub repo</a>
           <a className="btn btn--line" href={FACTS.readmeUrl} rel="noreferrer">README</a>
           <a className="btn btn--line" href={FACTS.videoUrl}>Demo video (soon)</a>

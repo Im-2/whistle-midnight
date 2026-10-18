@@ -232,6 +232,19 @@ export function MemberView({ live, persona, onPersona }: { live: Live; persona: 
 
 /* -------------------------------------------------------------------------- admin */
 
+/** Makes the demo shortcut explicit: the real protection is cryptographic, not this page. */
+function DemoBanner() {
+  return (
+    <aside className="demo-banner" role="note">
+      <strong>Demo mode</strong>
+      <span>
+        In a real deployment this console is a separate app, reachable only with the admin key. Reports are encrypted to the
+        case key, so opening this page without the key reveals nothing.
+      </span>
+    </aside>
+  );
+}
+
 export function AdminView({ live, persona, onPersona }: { live: Live; persona: PersonaId; onPersona: (p: PersonaId) => void }) {
   const { status, personas, refresh } = live;
   const reg = useAction();
@@ -244,6 +257,7 @@ export function AdminView({ live, persona, onPersona }: { live: Live; persona: P
   if (persona !== 'admin') {
     return (
       <section>
+        <DemoBanner />
         <div className="empty">
           <strong>Only the admin can do this.</strong>
           <span>Registering members and opening cases needs the admin identity.</span>
@@ -257,6 +271,7 @@ export function AdminView({ live, persona, onPersona }: { live: Live; persona: P
   if (!status?.deployed) {
     return (
       <section>
+        <DemoBanner />
         <div className="empty"><strong>No contract is deployed yet.</strong><span>Use “Deploy contract” in the bar above, then come back here.</span></div>
       </section>
     );
@@ -271,6 +286,7 @@ export function AdminView({ live, persona, onPersona }: { live: Live; persona: P
 
   return (
     <section>
+      <DemoBanner />
       <div className="card">
         <h2>Register members</h2>
         <p>The admin adds a member&rsquo;s commitment to the on-chain member tree. The member&rsquo;s secret never leaves them.</p>

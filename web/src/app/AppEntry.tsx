@@ -6,6 +6,7 @@ import '@fontsource/anton/400.css';
 import './app.css';
 import './app-extra.css';
 import './inbox.css';
+import './banner.css';
 import { App } from './App';
 
 export default function AppEntry() {

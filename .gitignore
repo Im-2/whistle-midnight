@@ -18,3 +18,5 @@ midnight-level-db/
 midnight-level-db*/
 web/dist/
 ui-refrence/
+web/dist-public/
+.vercel/

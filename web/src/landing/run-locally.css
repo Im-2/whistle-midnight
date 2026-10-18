@@ -1,0 +1,24 @@
+/* "Run it locally" page. Same tokens as the landing page (see landing.css). */
+.rl { min-height: 100vh; background: var(--grey); }
+.rl__top { display: flex; justify-content: space-between; align-items: center; padding: 26px var(--pad); }
+.rl__brand { display: inline-flex; align-items: center; gap: 10px; font: 400 21px/1 var(--display); letter-spacing: .06em; }
+.rl__back { font-size: 14px; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+.rl__back:hover, .rl__brand:hover { color: var(--rose); }
+.rl__main { width: min(900px, calc(100% - 2 * var(--pad))); margin: 0 auto; padding: clamp(24px, 6vh, 64px) 0 80px; }
+.rl__kicker { margin: 0 0 14px; font: 600 12px/1 var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.rl h1 { margin: 0 0 18px; font: 400 clamp(52px, 9vw, 120px)/.95 var(--display); text-transform: uppercase; }
+.rl__lede { max-width: 62ch; margin: 0 0 36px; font-size: 17px; line-height: 1.6; color: #2d2d2b; }
+.rl__card { margin-bottom: 28px; padding: 22px; background: var(--grey-2, #e7e7e3); border: 1px solid #bdbdb7; }
+.rl__card h2, .rl__steps h2 { margin: 0 0 10px; font: 400 clamp(24px, 3vw, 36px)/1.05 var(--display); text-transform: uppercase; letter-spacing: .01em; }
+.rl__card ul { margin: 0 0 14px; padding-left: 20px; line-height: 1.7; }
+.rl__card p, .rl__steps p { margin: 0 0 14px; max-width: 62ch; line-height: 1.6; color: #2d2d2b; }
+.rl__steps { list-style: none; margin: 0 0 28px; padding: 0; display: grid; gap: 28px; }
+.rl__steps h2 span { color: var(--rose); margin-right: 8px; }
+.rl__code { display: flex; flex-direction: column-reverse; background: var(--char); color: #ecece8; border-radius: 2px; }
+.rl__code pre { margin: 0; padding: 6px 18px 18px; overflow-x: auto; font: 400 14px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.rl__code code { white-space: pre; }
+.rl__code button { align-self: flex-end; margin: 10px 10px 0; font: 600 10px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: #c9c9c3; background: transparent; border: 1px solid #666663; padding: 7px 9px; cursor: pointer; }
+.rl__code button:hover { color: #fff; border-color: #fff; }
+.rl__links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.rl__foot { padding: 28px var(--pad) 40px; font-size: 13px; color: var(--muted); border-top: 1px solid rgba(0,0,0,.12); }
+@media (max-width: 560px) { .rl__code pre { font-size: 12.5px; } }
