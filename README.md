@@ -119,7 +119,7 @@ npm run cli -- status         # public view, no wallet needed
 
 The demo script ends with `Demo passed: ... reached CORROBORATED and the repeat report was refused.` and exits non-zero if any step fails. It can be run again on the same chain (each run uses fresh member names and a new case). To start from a clean chain, run `npm run demo:reset` and deploy again.
 
-Measured from a clean clone of this repository on a machine with warm Docker and npm caches: about 5.5 minutes end to end (install 34 s, tests 20 s, devnet 54 s, deploy 27 s, demo 183 s, status 5 s). A first run adds the Docker image download and the Compact install (about 1 minute). No faucet, token, `.env` file or wallet extension is needed on the local devnet: it pre-funds a genesis wallet. For Preprod, see [Preprod](#preprod).
+Measured from fresh clones of this repository on a machine with warm Docker and npm caches: 4.3 to 5.4 minutes end to end (second run: install 24 s, tests 17 s, devnet 31 s, deploy 25 s, demo 156 s, status 3 s; the demo was also re-run on the same chain and passed again). A first run on a new machine adds the Docker image download and the Compact install (about 1 minute). No faucet, token, `.env` file or wallet extension is needed on the local devnet: it pre-funds a genesis wallet. For Preprod, see [Preprod](#preprod).
 
 ## Tests
 
@@ -308,6 +308,7 @@ Wave 2 delivers: the Compact contract, 37 passing tests, CI, encrypted report de
 Apache-2.0 (see [LICENSE](LICENSE)). The membership-plus-nullifier pattern follows the public Midnight examples `PrivateVoting.compact` (midnightntwrk/midnight-expert) and `election.compact` (LFDT-Minokawa/compact); the case, threshold and corroboration logic is original. Devnet and wallet wiring in `api/network.ts`, `api/wallet.ts`, `api/wallet-state.ts` and `docker-compose.yml` is adapted from the Midnight `create-mn-app` hello-world template.
 
 Repository topics: `midnightntwrk`, `midnight`, `compact`, `zero-knowledge`.
+
 
 
 

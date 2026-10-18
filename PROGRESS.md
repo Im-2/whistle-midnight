@@ -33,6 +33,8 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 - Admin screen now carries a Demo mode banner; README has a Roles and access section.
 - TODO before submission: set the demo video URL in web/src/landing/facts.ts (videoUrl) and redeploy.
 
+- Clean-clone test (2026-10-18/19): cloned the public repo into an empty folder and followed the README judge path on a fresh local devnet, no .env / wallet state / .whistle. First run on main: all 6 steps passed in 323 s. Found and fixed: README lacked git clone/cd; Compact installer does not put compact on PATH (need source $HOME/.local/bin/env); demo-local.sh masked failures behind a grep pipe and could not be re-run on the same chain; README lacked the free-ports requirement (9944, 8088, 6300) and the ~1.8 GB first-run Docker download. Re-run of the fixed branch from a brand-new clone: all steps passed in 256 s, and the demo re-ran on the same chain (149 s). Compact install from scratch in a throwaway HOME: 56 s.
+
 ## Findings worth remembering
 - npm `overrides` pins one `onchain-runtime-v3@3.0.0`; otherwise circuits fail with "expected instance of StateValue".
 - Midnight-hosted Preprod endpoints (`*.preprod.midnight.network`) were shut down 2026-10-09 (HTTP 410). Preprod now needs Blockfrost: node `https://rpc.midnight-preprod.blockfrost.io`, indexer `https://midnight-preprod.blockfrost.io/api/v0`, WS `wss://midnight-preprod.blockfrost.io/api/v0/ws`, each with `?project_id=<token>` (the docs' form; the request said "?token", the docs say `project_id`).
@@ -57,6 +59,7 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 ## Working notes
 - Work happens in WSL at `~/whistle-midnight`; `scripts/` holds the WSL helper scripts. Docs are authored in the Windows folder and copied in by `scripts/wsl-commit.sh`.
 - Contract pattern credit: Midnight `PrivateVoting.compact` / `election.compact` examples (Apache-2.0).
+
 
 
 
