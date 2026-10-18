@@ -7,7 +7,7 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 1. Contract compiles, all CLAUDE.md tests pass. **Done.**
 2. TypeScript API layer (deploy, registerMember, openCase, fileReport, read case status) documented in the README. **Done** (`api/`), typechecks; verified end to end on the devnet through the CLI.
 3. CLI end to end on the local devnet. **Done** (see below).
-4. Preprod deploy via Blockfrost. **In progress** (token configured in git-ignored `.env`).
+4. Preprod deploy via Blockfrost. **Not completed**: sync stalled, stopped by cutoff; resumable (see below).
 5. README and docs. **README done**; DEMO.md and DECK.md drafted.
 
 ## Done
@@ -27,11 +27,13 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 - Whether the Blockfrost indexer (`/api/v0`) speaks the GraphQL schema the SDK expects. First Preprod deploy will show it.
 - A first sync of the fee wallet on Preprod may take a long time.
 
-## Preprod run (started about 12:25 WAT 2026-10-18)
-- Hard stop at 14:30 WAT: if not deployed by then, stop and tell the user. Fallback: Preview (endpoints unchanged, no token): npm run cli -- deploy --network preview (needs its own faucet funding of a separate fee address).
-- Progress is logged every 15 s (applied/highest index per sub-wallet) and wallet state is checkpointed every 60 s, so an interrupted sync resumes.
-- Observed: shielded wallet applies roughly 800 events/s; total chain size not reported yet, so no ETA.
-- Wallet SDK 1.2.0 has no start-block or birthday option in its public config (checked the type definitions of wallet-sdk-facade/shielded/unshielded/dust). A fresh wallet therefore syncs from genesis. Could not find it in the docs either.
+## Preprod / Preview attempts (stopped 14:50 WAT 2026-10-18)
+- Both public-network deploys were stopped at the user's 14:30 cutoff to save metered data. Neither completed; nothing is deployed on Preprod or Preview.
+- Preprod reached shielded 1,694,349 / dust ~283k events and Preview shielded 269,335 / dust 196,435, then both stalled with repeated Wallet.Sync ErrorEvent (websocket) errors. Total chain size is never reported by the SDK (highestIndex stays 0), so there is no ETA.
+- Wallet state was checkpointed at 14:49 in .midnight-wallet-state/{preprod,preview}/ (git-ignored); the next run resumes from there.
+- Resume: npm run cli -- deploy --network preprod (or preview). Needs ~hours on first sync and sustained connectivity; avoid metered data.
+- Wallet SDK 1.2.0 has no start-block/birthday option (checked type definitions; not in docs).
+- The local devnet run (deploy + full demo) is the verified end-to-end proof for the compile gate and tests.
 
 ## Next
 1. Finish Preprod deploy (or Preview fallback).
@@ -40,5 +42,6 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 ## Working notes
 - Work happens in WSL at `~/whistle-midnight`; `scripts/` holds the WSL helper scripts. Docs are authored in the Windows folder and copied in by `scripts/wsl-commit.sh`.
 - Contract pattern credit: Midnight `PrivateVoting.compact` / `election.compact` examples (Apache-2.0).
+
 
 
