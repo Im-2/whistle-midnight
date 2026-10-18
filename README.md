@@ -223,17 +223,45 @@ Midnight's own Preprod endpoints were shut down on 2026-10-09; Preprod now runs 
 
 Deployed Preprod contract address: see [PROGRESS.md](PROGRESS.md).
 
+## Frontend
+
+A React + Vite app in `web/`, served with a local gateway in `gateway/`.
+
+![Landing page hero](docs/img/landing-hero-desktop.png)
+
+| Route | What |
+|---|---|
+| `/` | Landing page: hero, why it matters, how it works, what it is built from, what the chain sees, honest limits |
+| `/app` | The working app: **Public dashboard** (case status and counts, no wallet), **Member** (create an identity, file an anonymous report), **Admin** (register a member, open a case) |
+
+<img src="docs/img/app-dashboard-mobile.jpg" alt="App dashboard on a phone" width="240" /> <img src="docs/img/landing-closing-mobile.jpg" alt="Landing page closing section on a phone" width="240" />
+
+Run it against the local devnet (after `npm run devnet:up` and `npm run cli -- deploy`):
+
+```bash
+npm start                # builds web/ and starts the gateway on http://localhost:8787  ("/" and "/app")
+# or, for development with hot reload:
+npm run gateway          # terminal 1: gateway on :8787
+npm run web:dev          # terminal 2: Vite on http://localhost:5173 (proxies /api to the gateway)
+```
+
+**The gateway and the trust model.** The app never talks to the chain directly. `gateway/index.ts` is a thin HTTP wrapper over the API layer (`api/`): it holds the fee wallet and the demo identity files in `.whistle/`, and it builds the zero-knowledge proofs. It listens on `127.0.0.1` only and rejects browser requests from non-local origins. Because it runs on the user's own machine, member secrets never leave that machine, which keeps the anonymity claim honest. A *hosted* gateway would see secrets and IP addresses and would break it; the roadmap replaces the gateway with in-wallet proving through the Lace DApp connector.
+
+Gateway endpoints (all JSON): `GET /api/status`, `GET /api/members`, `POST /api/members {name}`, `POST /api/register {who}`, `POST /api/cases {label, threshold}`, `POST /api/report {member, label, text}`. Errors return `{ error, code }` where `code` is a `WhistleErrorCode`.
+
+Landing page notes: smooth scroll with Lenis and scroll choreography with GSAP ScrollTrigger; fonts (Anton, Inter) are self-hosted via `@fontsource`; images are optimised WebP under 300 KB each. It respects `prefers-reduced-motion` (no pinning or parallax, plain fades) and drops pinning on phones. Every number on the page comes from this repository (25 tests, 3 circuits); there are no testimonials or invented statistics.
 ## Roadmap (Wave 3, not built)
 
 Member revocation; an org onboarding flow; escrowed identity reveal to an ombudsman; multi-org support; a hosted proof server so judges and users do not need Docker; a browser frontend using the Lace DApp connector for in-wallet proving.
 
 ## What changed this wave
 
-Wave 2 delivers: the Compact contract, 25 passing tests, CI, the TypeScript API layer, the CLI verified end to end on the local devnet, and this documentation. A React UI prototype was started and is parked on the `ui-wip` branch.
+Wave 2 delivers: the Compact contract, 25 passing tests, CI, the TypeScript API layer, the CLI verified end to end on the local devnet, and this documentation. The web app (Admin, Member and Public screens) and a landing page, connected to the contract end to end through the local gateway.
 
 ## Attribution and license
 
 Apache-2.0 (see [LICENSE](LICENSE)). The membership-plus-nullifier pattern follows the public Midnight examples `PrivateVoting.compact` (midnightntwrk/midnight-expert) and `election.compact` (LFDT-Minokawa/compact); the case, threshold and corroboration logic is original. Devnet and wallet wiring in `api/network.ts`, `api/wallet.ts`, `api/wallet-state.ts` and `docker-compose.yml` is adapted from the Midnight `create-mn-app` hello-world template.
 
 Repository topics: `midnightntwrk`, `midnight`, `compact`, `zero-knowledge`.
+
 

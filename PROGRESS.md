@@ -18,6 +18,12 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 - **API layer** `api/`: `WhistleClient` (connect, deploy, registerMember, openCase, fileReport), `readPublicState` / `readCase` (wallet-free), `FileKeyStore`, crypto helpers, typed `WhistleError` codes.
 - **CLI** `cli/whistle.ts`, a thin shell over the API. Devnet flow verified: deploy, 2 members registered, case threshold 2, 2 anonymous reports flip it to CORROBORATED, double report rejected on-chain.
 
+## Frontend (branch landing-page, started 2026-10-18 evening)
+- App (Admin / Member / Public) is on main: web/ (React + Vite) talks to gateway/ (local HTTP gateway over the API layer, 127.0.0.1 only). Verified end to end in the browser against the local devnet: create identity, register, open case, report, duplicate rejected with a friendly message, dashboard updates.
+- Bug found and fixed while testing: UI field names did not match the API layer's PublicState.
+- Landing page done on landing-page: hero (herocopy composition + pic1), pinned word-fill statement, stacked step cards, hover list, dark carousel, closing mosaic to checkerboard, footer. App screens restyled to match. Motion verified by sampling element states while scrolling (cards stack/recede, list dims, mosaic collapses); checked at phone width for layout. Images optimised to web/public/img (webp, all under 300 KB). ui-refrence/ is git-ignored.
+- Run: npm run gateway (port 8787, serves web/dist) and npm run web:dev (port 5173, proxies /api).
+
 ## Findings worth remembering
 - npm `overrides` pins one `onchain-runtime-v3@3.0.0`; otherwise circuits fail with "expected instance of StateValue".
 - Midnight-hosted Preprod endpoints (`*.preprod.midnight.network`) were shut down 2026-10-09 (HTTP 410). Preprod now needs Blockfrost: node `https://rpc.midnight-preprod.blockfrost.io`, indexer `https://midnight-preprod.blockfrost.io/api/v0`, WS `wss://midnight-preprod.blockfrost.io/api/v0/ws`, each with `?project_id=<token>` (the docs' form; the request said "?token", the docs say `project_id`).
@@ -42,6 +48,8 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 ## Working notes
 - Work happens in WSL at `~/whistle-midnight`; `scripts/` holds the WSL helper scripts. Docs are authored in the Windows folder and copied in by `scripts/wsl-commit.sh`.
 - Contract pattern credit: Midnight `PrivateVoting.compact` / `election.compact` examples (Apache-2.0).
+
+
 
 
 

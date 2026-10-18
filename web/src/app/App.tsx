@@ -276,7 +276,12 @@ export function App() {
   return (
     <main>
       <header>
-        <h1>Whistle</h1>
+        <h1>
+          <a className="brand" href="/" aria-label="Whistle home">
+            <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 24V8m9 16V8m9 16V8" stroke="currentColor" strokeWidth="3.4" /></svg>
+            WHISTLE
+          </a>
+        </h1>
         <p>Verified-anonymous reporting, corroborated on Midnight.</p>
       </header>
       <nav role="tablist">
