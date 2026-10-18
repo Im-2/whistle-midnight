@@ -10,5 +10,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["contract/src/**/*.ts", "test/**/*.ts", "cli/**/*.ts"]
+  "include": ["contract/src/**/*.ts", "test/**/*.ts", "api/**/*.ts", "cli/**/*.ts"]
 }

@@ -50,6 +50,19 @@ export interface NetworkState {
 export const STATE_FILE_NAME = '.midnight-state.json';
 export const STATE_VERSION = 1 as const;
 
+// Load .env from the working directory if present (Node 22+). A missing file is fine.
+try {
+  process.loadEnvFile(path.join(process.cwd(), '.env'));
+} catch {
+  /* no .env */
+}
+
+/** `?project_id=<Blockfrost token>` for the Preprod endpoints, or '' when no token is configured. */
+function blockfrostQuery(): string {
+  const id = process.env.BLOCKFROST_PREPROD_PROJECT_ID?.trim();
+  return id ? `?project_id=${encodeURIComponent(id)}` : '';
+}
+
 export const NETWORK_CONFIGS: Record<NetworkId, NetworkConfig> = {
   undeployed: {
     networkId: 'undeployed',
@@ -69,11 +82,13 @@ export const NETWORK_CONFIGS: Record<NetworkId, NetworkConfig> = {
     faucet: 'https://midnight-tmnight-preview.nethermind.dev',
     composeServices: ['proof-server'],
   },
+  // The Midnight-hosted Preprod endpoints were shut down on 2026-10-09. Preprod now runs behind
+  // Blockfrost; every request carries ?project_id=<token> (token read from .env, never committed).
   preprod: {
     networkId: 'preprod',
-    indexer:   'https://indexer.preprod.midnight.network/api/v4/graphql',
-    indexerWS: 'wss://indexer.preprod.midnight.network/api/v4/graphql/ws',
-    node:      'https://rpc.preprod.midnight.network',
+    indexer:   `https://midnight-preprod.blockfrost.io/api/v0${blockfrostQuery()}`,
+    indexerWS: `wss://midnight-preprod.blockfrost.io/api/v0/ws${blockfrostQuery()}`,
+    node:      `https://rpc.midnight-preprod.blockfrost.io${blockfrostQuery()}`,
     proofServer: 'http://127.0.0.1:6300',
     faucet: 'https://midnight-tmnight-preprod.nethermind.dev',
     composeServices: ['proof-server'],

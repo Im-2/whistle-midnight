@@ -14,3 +14,4 @@ midnight-level-db/
 leveldb/
 midnight-level-db/
 .DS_Store
+!.env.example
