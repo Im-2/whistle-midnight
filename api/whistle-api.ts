@@ -162,6 +162,8 @@ export class WhistleClient {
     const zkConfigProvider = new NodeZkConfigProvider(ZK_CONFIG_PATH);
     return {
       privateStateProvider: levelPrivateStateProvider({
+        // Per-network database so runs against different networks never contend for one lock.
+        ...(this.network === 'preprod' || this.network === 'undeployed' ? {} : { midnightDbName: `midnight-level-db-${this.network}` }),
         privateStateStoreName: 'whistle-state',
         accountId: this.feeAddress,
         privateStoragePasswordProvider: () => password,
