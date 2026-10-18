@@ -108,7 +108,7 @@ export default function RunLocally() {
         <div className="rl__links">
           <a className="btn btn--solid" href={FACTS.repoUrl} rel="noreferrer">GitHub repo</a>
           <a className="btn btn--ghost" href={FACTS.readmeUrl} rel="noreferrer">README</a>
-          <a className="btn btn--ghost" href={FACTS.videoUrl}>Demo video (soon)</a>
+          <a className="btn btn--ghost" href={FACTS.videoUrl} target="_blank" rel="noopener noreferrer">Watch the demo</a>
         </div>
       </main>
 

@@ -24,6 +24,7 @@ export function Nav() {
         <a href="#how">How it works</a>
         <a href="#privacy">Privacy</a>
         <a href="#chain">What the chain sees</a>
+        <a href={FACTS.videoUrl} target="_blank" rel="noopener noreferrer">Watch the demo</a>
         <a href={FACTS.repoUrl} rel="noreferrer">Source</a>
       </nav>
       <a className="btn btn--small" href={APP_HREF}>LAUNCH APP</a>
@@ -70,6 +71,7 @@ export default function Hero() {
       <div className="hero__cta">
         <a className="btn btn--solid" href={APP_HREF}>Launch app</a>
         <a className="btn btn--ghost" href="#how">How it works</a>
+        <a className="btn btn--ghost" href={FACTS.videoUrl} target="_blank" rel="noopener noreferrer">Watch the demo</a>
       </div>
       </div>
 

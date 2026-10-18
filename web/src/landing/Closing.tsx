@@ -65,7 +65,7 @@ export default function Closing() {
           <a className="btn btn--solid-light" href={APP_HREF}>Launch app</a>
           <a className="btn btn--line" href={FACTS.repoUrl} rel="noreferrer">GitHub repo</a>
           <a className="btn btn--line" href={FACTS.readmeUrl} rel="noreferrer">README</a>
-          <a className="btn btn--line" href={FACTS.videoUrl}>Demo video (soon)</a>
+          <a className="btn btn--line" href={FACTS.videoUrl} target="_blank" rel="noopener noreferrer">Watch the demo</a>
         </div>
       </div>
     </section>

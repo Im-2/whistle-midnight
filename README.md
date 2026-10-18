@@ -5,6 +5,8 @@ Midnight Buildathon (AKINDO), Wave 2. License: Apache-2.0.
 
 An organisation keeps a private set of members. A member files a report against a case and proves *"I am a verified member"* without revealing which member. A per-case nullifier stops the same member reporting twice. Once N distinct verified members have reported the same case, the case flips to **CORROBORATED** on-chain. Nobody learns who reported; the public sees only case status and counts.
 
+**Demo video:** https://youtu.be/PaLbYNbhHMQ (about 3 minutes, a real run on a local devnet).
+
 **Live landing page:** https://whistle-midnight.vercel.app (static; the app itself runs on your own machine, see [Run it locally](https://whistle-midnight.vercel.app/run-locally)).
 
 ## Problem and audience
@@ -102,6 +104,8 @@ npm install
 `package.json` pins a single `@midnight-ntwrk/onchain-runtime-v3` via `overrides`. Without it, two copies load and circuits fail with `expected instance of StateValue`.
 
 ## How judges can test it in under 10 minutes
+
+Short on time? Watch the [demo video](https://youtu.be/PaLbYNbhHMQ) first: it shows the whole flow on a local devnet, including the proof waits.
 
 Prerequisites: Node 22+, Docker running, and Compact 0.31.1 on your PATH ([Setup](#setup) step 1). Ports 9944, 8088 and 6300 must be free, so stop any other Midnight devnet or proof server first. The first `devnet:up` downloads about 1.8 GB of Docker images (the node image is most of it), so allow extra time on a slow connection.
 

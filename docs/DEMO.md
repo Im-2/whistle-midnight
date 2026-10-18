@@ -1,5 +1,7 @@
 ﻿# Whistle demo script
 
+**Recorded demo:** https://youtu.be/PaLbYNbhHMQ
+
 Two ways to demo: the **browser app** (best for the video) and the **CLI** (`scripts/demo-local.sh`, unattended).
 
 ## Browser demo: exactly what to click

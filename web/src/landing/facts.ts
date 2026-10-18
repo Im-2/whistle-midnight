@@ -10,8 +10,8 @@ export const FACTS = {
   memberCapacity: 1024,
   repoUrl: 'https://github.com/Im-2/whistle-midnight',
   readmeUrl: 'https://github.com/Im-2/whistle-midnight#readme',
-  // Placeholder until the demo video is recorded.
-  videoUrl: '#demo-video',
+  /** The demo video. Every video link on the site reads this value. */
+  videoUrl: 'https://youtu.be/PaLbYNbhHMQ',
 } as const;
 
 /** True in the public static build (VITE_PUBLIC_SITE=true): no app and nothing that calls a gateway. */

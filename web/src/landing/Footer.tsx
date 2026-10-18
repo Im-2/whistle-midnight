@@ -13,6 +13,7 @@ export default function Footer() {
           <h4>Project</h4>
           <a href={FACTS.repoUrl} rel="noreferrer">GitHub</a>
           <a href={FACTS.readmeUrl} rel="noreferrer">README</a>
+          <a href={FACTS.videoUrl} target="_blank" rel="noopener noreferrer">Watch the demo</a>
           <a href={APP_HREF}>Launch app</a>
         </div>
         <div>

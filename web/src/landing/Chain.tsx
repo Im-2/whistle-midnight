@@ -11,7 +11,7 @@ const SLIDES = [
       'How many reports each case has, against its threshold',
       'Nullifiers: one per member per case, unlinkable to a member',
       'A SHA-256 hash of each report, never the text',
-      'The member commitments the admin registered, so the member count',
+      'The member commitments the admin registered, and so the number of members',
     ],
   },
   {
