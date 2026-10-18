@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: Apache-2.0
+// Numbers shown on the landing page. Each one is real and comes from the repo; none is invented.
+// Re-verify before submission: `npm test` (tests) and contract/src/whistle.compact (exported circuits).
+export const FACTS = {
+  /** `npm test`: 14 simulator tests + 11 API-layer tests. */
+  tests: 25,
+  /** Exported circuits in contract/src/whistle.compact: registerMember, openCase, fileReport. */
+  circuits: 3,
+  /** HistoricMerkleTree<10, Bytes<32>>: 2^10 member slots. */
+  memberCapacity: 1024,
+  repoUrl: 'https://github.com/Im-2/whistle-midnight',
+  readmeUrl: 'https://github.com/Im-2/whistle-midnight#readme',
+  // Placeholder until the demo video is recorded.
+  videoUrl: '#demo-video',
+} as const;
