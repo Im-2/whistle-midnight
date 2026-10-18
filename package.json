@@ -1,0 +1,26 @@
+{
+  "name": "whistle-midnight",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Whistle: verified-anonymous reporting with on-chain corroboration on Midnight",
+  "license": "Apache-2.0",
+  "scripts": {
+    "compile": "compact compile contract/src/whistle.compact contract/src/managed/whistle",
+    "test": "npm run compile && vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": ["midnight", "blockchain", "zero-knowledge", "privacy", "compact"]
+}

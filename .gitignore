@@ -1,0 +1,13 @@
+node_modules/
+dist/
+# compiler output (regenerate with `npm run compile`)
+contract/src/managed/
+# never commit wallet seeds, keys or local devnet state
+.midnight-state.json
+.env
+.env.*
+*.seed
+*.key
+leveldb/
+midnight-level-db/
+.DS_Store

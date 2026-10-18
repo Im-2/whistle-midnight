@@ -1,0 +1,130 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Whistle: verified-anonymous reporting with on-chain corroboration.
+//
+// Pattern (Merkle membership + per-scope nullifier) follows the public Midnight
+// examples: PrivateVoting.compact (midnightntwrk/midnight-expert) and
+// election.compact (LFDT-Minokawa/compact). The case/threshold/corroboration
+// logic is original to Whistle.
+
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+
+export enum CaseStatus { OPEN, CORROBORATED }
+
+export struct CaseInfo {
+  threshold: Uint<32>,
+  reportCount: Uint<32>,
+  status: CaseStatus
+}
+
+// ---------------------------------------------------------------- public ledger
+
+// Commitment (public key) of the admin, fixed at deployment.
+export sealed ledger admin: Bytes<32>;
+
+// Member commitments. HistoricMerkleTree so a proof built against an older root
+// stays valid after more members are added. Depth 10 = up to 1024 members.
+export ledger members: HistoricMerkleTree<10, Bytes<32>>;
+
+// caseId -> status and counts (public by design).
+export ledger cases: Map<Bytes<32>, CaseInfo>;
+
+// Spent nullifiers: one per (member, case). Unlinkable to the member commitment.
+export ledger nullifiers: Set<Bytes<32>>;
+
+// Hashes of filed reports (content stays off-chain; only the hash is public).
+export ledger reportHashes: Set<Bytes<32>>;
+
+// --------------------------------------------------------- private state (witnesses)
+
+// The member's own secret (never leaves their machine).
+witness memberSecret(): Bytes<32>;
+
+// The admin's secret (only used by the admin's machine).
+witness adminSecret(): Bytes<32>;
+
+// The member's Merkle path for their commitment, built locally from indexer state.
+witness memberPath(commitment: Bytes<32>): MerkleTreePath<10, Bytes<32>>;
+
+// -------------------------------------------------------------------- helpers
+
+// commitment = H("whistle:member:" , secret)
+circuit commitmentOf(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "whistle:member:"), secret]);
+}
+
+// nullifier = H("whistle:nullifier:", secret, caseId); distinct domain from the commitment
+circuit nullifierOf(secret: Bytes<32>, caseId: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "whistle:nullifier:"), secret, caseId]);
+}
+
+circuit requireAdmin(): [] {
+  const callerCommitment = commitmentOf(adminSecret());
+  // Reveals only whether the caller is the admin, never the secret.
+  assert(disclose(callerCommitment == admin), "Not admin");
+}
+
+// ------------------------------------------------------------------ constructor
+
+constructor() {
+  // The admin commitment is intentionally public (accountability).
+  admin = disclose(commitmentOf(adminSecret()));
+}
+
+// --------------------------------------------------------------------- circuits
+
+// Admin only. The member generates their own secret and hands the admin the
+// commitment, so the admin never learns the secret.
+export circuit registerMember(commitment: Bytes<32>): [] {
+  requireAdmin();
+  members.insert(disclose(commitment));
+}
+
+// Admin only.
+export circuit openCase(caseId: Bytes<32>, threshold: Uint<32>): [] {
+  requireAdmin();
+  assert(threshold > 0, "Threshold must be positive");
+  const id = disclose(caseId);
+  assert(!cases.member(id), "Case already exists");
+  cases.insert(id, CaseInfo {
+    threshold: disclose(threshold),
+    reportCount: 0,
+    status: CaseStatus.OPEN
+  });
+}
+
+// The core: a verified member files a report without revealing which member.
+export circuit fileReport(caseId: Bytes<32>, reportHash: Bytes<32>): [] {
+  const id = disclose(caseId);
+  assert(cases.member(id), "Unknown case");
+  const info = cases.lookup(id);
+
+  const secret = memberSecret();
+  const commitment = commitmentOf(secret);
+
+  // 1. Prove membership in ZK. The path comes from a witness (untrusted), so bind
+  //    its leaf to *this* caller's commitment, otherwise anyone could reuse a
+  //    public path belonging to another member.
+  const path = memberPath(commitment);
+  assert(path.leaf == commitment, "Merkle path is not for this member");
+  const root = merkleTreePathRoot<10, Bytes<32>>(path);
+  assert(members.checkRoot(disclose(root)), "Not a verified member");
+
+  // 2. One report per member per case. The nullifier is public but cannot be
+  //    linked back to the commitment without the secret.
+  const nul = disclose(nullifierOf(secret, caseId));
+  assert(!nullifiers.member(nul), "Already reported this case");
+  nullifiers.insert(nul);
+
+  // 3. Record the report and update the case.
+  reportHashes.insert(disclose(reportHash));
+  const newCount = info.reportCount + 1 as Uint<32>;
+  const newStatus = newCount >= info.threshold ? CaseStatus.CORROBORATED : CaseStatus.OPEN;
+  cases.insert(id, CaseInfo {
+    threshold: info.threshold,
+    reportCount: newCount,
+    status: newStatus
+  });
+}
