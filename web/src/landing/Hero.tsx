@@ -4,8 +4,16 @@ import { FACTS } from './facts';
 import { gsap, prefersReducedMotion } from './useSmoothScroll';
 
 export function Nav() {
+  const el = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      gsap.from('.nav > *', { opacity: 0, y: -12, duration: 0.9, stagger: 0.08, delay: 0.6, ease: 'power3.out' });
+    }, el);
+    return () => ctx.revert();
+  }, []);
   return (
-    <header className="nav">
+    <header className="nav" ref={el}>
       <a className="nav__mark" href="/" aria-label="Whistle home">
         <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
           <path d="M7 24V8m9 16V8m9 16V8" stroke="currentColor" strokeWidth="3.4" strokeLinecap="butt" />
@@ -32,19 +40,25 @@ export default function Hero() {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.from('.hero__img', { opacity: 0, scale: 1.28, filter: 'blur(26px)', duration: 1.8, ease: 'power2.out' }, 0)
         .from('.hero__line > span', { yPercent: 110, duration: 1, stagger: 0.12 }, 0.35)
-        .from('.hero__cta > *, .hero__caption, .hero__stat, .hero__inset, .nav > *', { opacity: 0, y: 18, duration: 0.9, stagger: 0.07 }, 0.9);
+        .from('.hero__cta > *, .hero__caption, .hero__stat, .hero__inset', { opacity: 0, y: 18, duration: 0.9, stagger: 0.07 }, 0.9);
     }, root);
-    return () => ctx.revert();
+    // As you scroll away, the whole hero dissolves (fade + blur + lift) into the next section.
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.to(root.current, { opacity: 0.0, filter: 'blur(14px)', y: -60, ease: 'none', scrollTrigger: { trigger: root.current, start: 'top top', end: '75% top', scrub: true } });
+    });
+    return () => {
+      mm.revert();
+      ctx.revert();
+    };
   }, []);
 
   return (
     <section className="hero" ref={root} aria-label="Whistle">
       <div className="hero__media" aria-hidden="true">
-        <img className="hero__img" src="/img/hero.webp" width={660} height={440} alt="" fetchPriority="high" decoding="async" />
+        <img className="hero__img" src="/img/hero.webp" width={660} height={440} alt="" {...{ fetchpriority: 'high' }} decoding="async" />
         <div className="hero__veil" />
       </div>
-
-      <Nav />
 
       <div className="hero__main">
       <h1 className="hero__title">
