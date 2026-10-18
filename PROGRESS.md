@@ -7,17 +7,18 @@
 - **Contract** `contract/src/whistle.compact` compiles (language 0.23, compiler 0.31.1): `registerMember`, `openCase`, `fileReport` with HistoricMerkleTree membership, per-case nullifier, threshold corroboration.
 - **Tests**: 14 simulator tests pass (`npm test`): happy path, double report, cross-case, non-member, non-admin, threshold flip, historic roots, privacy checks. CI workflow in `.github/workflows/ci.yml`.
 
+- docs/DEMO.md and docs/DECK.md drafted.
 - **CLI** (`npm run cli -- ...`): devnet-up, deploy, member-new, register, open-case, report, status, wallet. Verified end to end on the local devnet (`scripts/demo-local.sh`): 2 reports flip a threshold-2 case to CORROBORATED; a double report is rejected on-chain.
 - Fix worth remembering: npm `overrides` pins a single `onchain-runtime-v3@3.0.0`, otherwise circuits fail with "expected instance of StateValue".
 
 ## Next
-1. Preprod deploy (blocked on the user funding the fee wallet, see below).
+1. Preprod deploy (blocked on a Blockfrost token, see below).
 2. Minimal React + Vite UI (Admin / Member / Public dashboard).
 3. Docs: full README, docs/DEMO.md, docs/DECK.md.
-4. Preprod deployment (needs the user's wallet + faucet).
 
 ## Blockers / needs the user
-- Fund the Preprod fee wallet from the faucet (address via `npm run cli -- wallet --network preprod`). Then `npm run cli -- deploy --network preprod` registers NIGHT for DUST and deploys.
+- **Preprod endpoints moved.** The Midnight-hosted Preprod indexer/RPC (`*.preprod.midnight.network`) were shut down on 2026-10-09 (indexer returns HTTP 410). Docs now point to Blockfrost endpoints that need a Blockfrost project token (starts with `nightpreprod`). User must create the free Blockfrost project and give the token; then update `cli/network.ts` (preprod entry) and deploy. Fee wallet is already funded.
+- Unknown: whether the Blockfrost indexer speaks the same GraphQL schema as the scaffold's `/api/v4/graphql` (the docs list a `/api/v0` path). Needs a test once the token exists.
 
 ## Not verified
 - CI workflow has not yet run on GitHub.
