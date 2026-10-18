@@ -75,6 +75,8 @@ export class WhistleClient {
     }
   }
 
+  private lastProgress = 'waiting for first update';
+
   /** The fee wallet's address (fund this from the faucet on public networks). */
   get feeAddress(): string {
     return this.wallet.unshieldedKeystore.getBech32Address().toString();
@@ -82,8 +84,23 @@ export class WhistleClient {
 
   private async prepareFunds() {
     const { wallet, log } = this;
-    log('Syncing wallet (first sync on a public network can take several minutes)...');
-    const state = await wallet.wallet.waitForSyncedState();
+    log('Syncing wallet (first sync on a public network can take a long time; progress below)...');
+    // Report real progress and checkpoint the wallet state so an interrupted sync can resume.
+    const fmt = (p: any) => (p ? `${p.appliedIndex ?? '?'}/${p.highestIndex ?? '?'}${p.isConnected === false ? ' (disconnected)' : ''}` : 'n/a');
+    const sub = wallet.wallet.state().subscribe((s: any) => {
+      this.lastProgress = `shielded ${fmt(s.shielded?.progress)} | unshielded ${fmt(s.unshielded?.progress)} | dust ${fmt(s.dust?.progress)}`;
+    });
+    const ticker = setInterval(() => log(`sync: ${this.lastProgress}`), 15_000);
+    const saver = setInterval(() => void persistWalletState(this.network, wallet).catch(() => undefined), 60_000);
+    let state;
+    try {
+      state = await wallet.wallet.waitForSyncedState();
+    } finally {
+      clearInterval(ticker);
+      clearInterval(saver);
+      sub.unsubscribe();
+    }
+    log(`sync: complete (${this.lastProgress})`);
     const night = state.unshielded.balances[unshieldedToken().raw] ?? 0n;
     log(`Fee wallet ${this.feeAddress} holds ${night.toLocaleString()} tNIGHT.`);
     if (night === 0n) {

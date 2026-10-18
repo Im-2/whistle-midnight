@@ -1,4 +1,4 @@
-# Whistle
+﻿# Whistle
 
 **Verified-anonymous reporting with on-chain corroboration, built on [Midnight](https://midnight.network).**
 Midnight Buildathon (AKINDO), Wave 2. License: Apache-2.0.
@@ -100,7 +100,7 @@ Prerequisites: Node 22+, Docker running, Compact 0.31.1 (above).
 
 ```bash
 npm install
-npm test                      # compiles the contract, runs 14 simulator tests (~10 s)
+npm test                      # compiles the contract, runs 25 tests (~10 s)
 
 npm run devnet:up             # local node + indexer + proof server in Docker
 npm run cli -- deploy         # deploys the contract (about 1-2 min)
@@ -118,7 +118,7 @@ npm test          # compile + vitest (simulator: runs the real compiled circuits
 npm run typecheck
 ```
 
-`test/whistle.test.ts` covers: a valid member files (count 1); the same member twice on the same case is rejected; the same member on two cases is allowed; a non-member is rejected; a non-admin cannot register or open a case; the threshold flips status exactly at N and not before; a late-registered member can prove against historic roots; and **privacy**: the public state after a report contains neither the secret nor the commitment, and nullifiers across cases are unlinkable. CI (`.github/workflows/ci.yml`) runs all of it on every push.
+`test/whistle.test.ts` (14 simulator tests) covers: a valid member files (count 1); the same member twice on the same case is rejected; the same member on two cases is allowed; a non-member is rejected; a non-admin cannot register or open a case; the threshold flips status exactly at N and not before; a late-registered member can prove against historic roots; and **privacy**: the public state after a report contains neither the secret nor the commitment, and nullifiers across cases are unlinkable. `test/api.test.ts` (11 tests) covers the API layer: crypto helpers, that `nullifierFor` matches the nullifier the contract stores, assertion-to-error-code mapping, and the key store. CI (`.github/workflows/ci.yml`) runs all of it on every push.
 
 ## API reference
 
@@ -229,10 +229,11 @@ Member revocation; an org onboarding flow; escrowed identity reveal to an ombuds
 
 ## What changed this wave
 
-Wave 2 delivers: the Compact contract, 14 passing simulator tests, CI, the TypeScript API layer, the CLI verified end to end on the local devnet, and this documentation. A React UI prototype was started and is parked on the `ui-wip` branch.
+Wave 2 delivers: the Compact contract, 25 passing tests, CI, the TypeScript API layer, the CLI verified end to end on the local devnet, and this documentation. A React UI prototype was started and is parked on the `ui-wip` branch.
 
 ## Attribution and license
 
 Apache-2.0 (see [LICENSE](LICENSE)). The membership-plus-nullifier pattern follows the public Midnight examples `PrivateVoting.compact` (midnightntwrk/midnight-expert) and `election.compact` (LFDT-Minokawa/compact); the case, threshold and corroboration logic is original. Devnet and wallet wiring in `api/network.ts`, `api/wallet.ts`, `api/wallet-state.ts` and `docker-compose.yml` is adapted from the Midnight `create-mn-app` hello-world template.
 
 Repository topics: `midnightntwrk`, `midnight`, `compact`, `zero-knowledge`.
+

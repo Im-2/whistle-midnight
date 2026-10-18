@@ -1,4 +1,4 @@
-# PROGRESS
+﻿# PROGRESS
 
 ## Plan change (2026-10-18)
 UI work stopped by the user, who will supply their own UI prototype after the backend is done. The React UI + local server built so far is parked, not deleted, on branch `ui-wip` (pushed). `main` carries the backend only.
@@ -14,7 +14,7 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 - Environment: Windows 11 + WSL2 Ubuntu. Docker Desktop (WSL integration on), Node 22 (nvm in WSL), Compact 0.5.3 with compiler 0.31.1, gh authenticated.
 - Public repo `Im-2/whistle-midnight`, Apache-2.0, topics: midnightntwrk, midnight, compact, zero-knowledge.
 - **Contract** `contract/src/whistle.compact` (language 0.23, compiler 0.31.1): `registerMember`, `openCase`, `fileReport`; HistoricMerkleTree membership, per-case nullifier, threshold corroboration.
-- **Tests**: 14 simulator tests pass (`npm test`): valid report, double report rejected, cross-case allowed, non-member rejected, non-admin rejected (register and open case), threshold flip exactly at N, historic roots, two privacy checks. CI workflow passes on GitHub.
+- **Tests**: 25 pass (`npm test`): 14 simulator tests + 11 API-layer tests. Simulator tests cover: valid report, double report rejected, cross-case allowed, non-member rejected, non-admin rejected (register and open case), threshold flip exactly at N, historic roots, two privacy checks. CI workflow passes on GitHub.
 - **API layer** `api/`: `WhistleClient` (connect, deploy, registerMember, openCase, fileReport), `readPublicState` / `readCase` (wallet-free), `FileKeyStore`, crypto helpers, typed `WhistleError` codes.
 - **CLI** `cli/whistle.ts`, a thin shell over the API. Devnet flow verified: deploy, 2 members registered, case threshold 2, 2 anonymous reports flip it to CORROBORATED, double report rejected on-chain.
 
@@ -27,10 +27,18 @@ UI work stopped by the user, who will supply their own UI prototype after the ba
 - Whether the Blockfrost indexer (`/api/v0`) speaks the GraphQL schema the SDK expects. First Preprod deploy will show it.
 - A first sync of the fee wallet on Preprod may take a long time.
 
+## Preprod run (started about 12:25 WAT 2026-10-18)
+- Hard stop at 14:30 WAT: if not deployed by then, stop and tell the user. Fallback: Preview (endpoints unchanged, no token): npm run cli -- deploy --network preview (needs its own faucet funding of a separate fee address).
+- Progress is logged every 15 s (applied/highest index per sub-wallet) and wallet state is checkpointed every 60 s, so an interrupted sync resumes.
+- Observed: shielded wallet applies roughly 800 events/s; total chain size not reported yet, so no ETA.
+- Wallet SDK 1.2.0 has no start-block or birthday option in its public config (checked the type definitions of wallet-sdk-facade/shielded/unshielded/dust). A fresh wallet therefore syncs from genesis. Could not find it in the docs either.
+
 ## Next
-1. Swap devnet proof server to 8.1.3 (matrix version) and run the Preprod deploy.
+1. Finish Preprod deploy (or Preview fallback).
 2. Hand the user the API surface for their UI.
 
 ## Working notes
 - Work happens in WSL at `~/whistle-midnight`; `scripts/` holds the WSL helper scripts. Docs are authored in the Windows folder and copied in by `scripts/wsl-commit.sh`.
 - Contract pattern credit: Midnight `PrivateVoting.compact` / `election.compact` examples (Apache-2.0).
+
+
