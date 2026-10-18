@@ -16,3 +16,5 @@ midnight-level-db/
 .DS_Store
 !.env.example
 midnight-level-db*/
+web/dist/
+ui-refrence/

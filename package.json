@@ -11,9 +11,16 @@
     "typecheck": "tsc --noEmit",
     "cli": "tsx cli/whistle.ts",
     "devnet:up": "docker compose up -d --wait",
-    "devnet:down": "docker compose down -v"
+    "devnet:down": "docker compose down -v",
+    "gateway": "tsx gateway/index.ts",
+    "web:dev": "vite web",
+    "web:build": "vite build web",
+    "build": "npm run typecheck && npm run web:build",
+    "start": "npm run web:build && npm run gateway"
   },
   "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "@midnight-ntwrk/compact-runtime": "0.16.0",
     "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
     "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.1.1",
@@ -26,14 +33,22 @@
     "@midnight-ntwrk/midnight-js-utils": "4.1.1",
     "@midnight-ntwrk/wallet-sdk": "1.2.0",
     "@scure/bip39": "2.2.0",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.27",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "rxjs": "^7.8.2",
     "ws": "^8.21.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
     "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.3.4",
     "tsx": "^4.23.1",
     "typescript": "^6.0.3",
+    "vite": "^6.0.0",
     "vitest": "^3.2.4"
   },
   "engines": {
