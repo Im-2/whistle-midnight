@@ -45,6 +45,9 @@ const secretsDir = path.join(root, '.whistle');
 const { network, config: networkConfig } = resolveNetwork();
 const args = process.argv.slice(2).filter((a, i, all) => a !== '--network' && all[i - 1] !== '--network');
 
+/** Machine-readable result line, consumed by server/index.ts. */
+const emit = (data: object) => console.log(`RESULT:${JSON.stringify(data)}`);
+
 const fail = (msg: string): never => {
   console.error(`\n❌ ${msg}\n`);
   process.exit(1);
@@ -267,6 +270,7 @@ const commands: Record<string, () => Promise<void>> = {
     writeSecret(memberFile(name), { memberSecret: hex(secret) });
     console.log(`\n  Generated a secret for "${name}" in ${memberFile(name)} (keep it private).`);
     console.log(`  Commitment to give the admin: ${hex(commitmentOf(secret))}\n`);
+    emit({ name, commitment: hex(commitmentOf(secret)) });
   },
 
   async register() {
@@ -279,6 +283,7 @@ const commands: Record<string, () => Promise<void>> = {
       console.log('  Registering member commitment (admin proof)...');
       const tx: any = await withDustRetry('register', () => c.callTx.registerMember(commitment));
       console.log(`\n  ✅ Registered ${hex(commitment)}\n  tx ${tx.public.txId} (block ${tx.public.blockHeight})\n`);
+      emit({ commitment: hex(commitment), txId: tx.public.txId, blockHeight: Number(tx.public.blockHeight) });
     });
   },
 
@@ -290,6 +295,7 @@ const commands: Record<string, () => Promise<void>> = {
       console.log('  Opening case (admin proof)...');
       const tx: any = await withDustRetry('open-case', () => c.callTx.openCase(caseIdOf(label), BigInt(threshold)));
       console.log(`\n  ✅ Case "${label}" open, corroborated at ${threshold} distinct member reports.\n  tx ${tx.public.txId}\n`);
+      emit({ label, threshold, txId: tx.public.txId });
     });
   },
 
@@ -301,6 +307,7 @@ const commands: Record<string, () => Promise<void>> = {
       console.log('  Filing report (zero-knowledge membership proof)...');
       const tx: any = await withDustRetry('report', () => c.callTx.fileReport(caseIdOf(label), Uint8Array.from(reportHash)));
       console.log(`\n  ✅ Report filed anonymously. Content hash ${hex(reportHash)}\n  tx ${tx.public.txId}\n`);
+      emit({ reportHash: hex(reportHash), txId: tx.public.txId });
     });
   },
 
@@ -308,6 +315,19 @@ const commands: Record<string, () => Promise<void>> = {
     const [label] = args.slice(1);
     const l = await readLedger();
     const rows = [...l.cases].filter(([id]) => !label || labelOf(id) === label);
+    emit({
+      network,
+      contract: requireDeployment(),
+      admin: hex(l.admin),
+      reports: Number(l.reportHashes.size()),
+      nullifiers: Number(l.nullifiers.size()),
+      cases: rows.map(([id, info]) => ({
+        label: labelOf(id),
+        threshold: Number(info.threshold),
+        reportCount: Number(info.reportCount),
+        status: info.status === CaseStatus.CORROBORATED ? 'CORROBORATED' : 'OPEN',
+      })),
+    });
     console.log(`\n  Contract ${requireDeployment()} on ${network}`);
     console.log(`  Admin commitment: ${hex(l.admin)}`);
     console.log(`  Reports filed: ${l.reportHashes.size()}  |  nullifiers used: ${l.nullifiers.size()}\n`);

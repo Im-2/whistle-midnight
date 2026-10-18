@@ -8,7 +8,23 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "jsx": "react-jsx",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ]
   },
-  "include": ["contract/src/**/*.ts", "test/**/*.ts", "cli/**/*.ts"]
+  "include": [
+    "contract/src/**/*.ts",
+    "test/**/*.ts",
+    "cli/**/*.ts",
+    "server/**/*.ts",
+    "ui/src/**/*.ts",
+    "ui/src/**/*.tsx",
+    "ui/vite.config.ts"
+  ]
 }
