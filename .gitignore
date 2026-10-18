@@ -8,6 +8,9 @@ contract/src/managed/
 .env.*
 *.seed
 *.key
+.whistle/
+.midnight-wallet-state/
+midnight-level-db/
 leveldb/
 midnight-level-db/
 .DS_Store

@@ -7,14 +7,17 @@
 - **Contract** `contract/src/whistle.compact` compiles (language 0.23, compiler 0.31.1): `registerMember`, `openCase`, `fileReport` with HistoricMerkleTree membership, per-case nullifier, threshold corroboration.
 - **Tests**: 14 simulator tests pass (`npm test`): happy path, double report, cross-case, non-member, non-admin, threshold flip, historic roots, privacy checks. CI workflow in `.github/workflows/ci.yml`.
 
+- **CLI** (`npm run cli -- ...`): devnet-up, deploy, member-new, register, open-case, report, status, wallet. Verified end to end on the local devnet (`scripts/demo-local.sh`): 2 reports flip a threshold-2 case to CORROBORATED; a double report is rejected on-chain.
+- Fix worth remembering: npm `overrides` pins a single `onchain-runtime-v3@3.0.0`, otherwise circuits fail with "expected instance of StateValue".
+
 ## Next
-1. CLI (deploy, register, open case, file report, status) on the local devnet.
+1. Preprod deploy (blocked on the user funding the fee wallet, see below).
 2. Minimal React + Vite UI (Admin / Member / Public dashboard).
 3. Docs: full README, docs/DEMO.md, docs/DECK.md.
 4. Preprod deployment (needs the user's wallet + faucet).
 
 ## Blockers / needs the user
-- Preprod wallet + faucet (tNIGHT) + DUST accrual: user must do this early (DUST accrues slowly).
+- Fund the Preprod fee wallet from the faucet (address via `npm run cli -- wallet --network preprod`). Then `npm run cli -- deploy --network preprod` registers NIGHT for DUST and deploys.
 
 ## Not verified
 - CI workflow has not yet run on GitHub.
