@@ -91,7 +91,9 @@ Compact does not run natively on Windows; use WSL2 (Ubuntu). Docker Desktop with
 ```bash
 # 1. Compact toolchain (Linux/macOS/WSL)
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+source "$HOME/.local/bin/env"   # or open a new shell: puts `compact` on your PATH (the installer does not do this for the current shell)
 compact update 0.31.1
+compact compile --version       # should print 0.31.1
 
 # 2. Dependencies
 npm install
@@ -101,20 +103,23 @@ npm install
 
 ## How judges can test it in under 10 minutes
 
-Prerequisites: Node 22+, Docker running, Compact 0.31.1 (above).
+Prerequisites: Node 22+, Docker running, and Compact 0.31.1 on your PATH ([Setup](#setup) step 1). Ports 9944, 8088 and 6300 must be free, so stop any other Midnight devnet or proof server first. The first `devnet:up` downloads about 1.8 GB of Docker images (the node image is most of it), so allow extra time on a slow connection.
 
 ```bash
-npm install
-npm test                      # compiles the contract, runs 37 tests (~10 s)
+git clone https://github.com/Im-2/whistle-midnight && cd whistle-midnight
+npm install                   # "npm warn deprecated" lines are harmless
+npm test                      # compiles the contract, runs 37 tests (~20 s)
 
 npm run devnet:up             # local node + indexer + proof server in Docker
-npm run cli -- deploy         # deploys the contract (about 1-2 min)
+npm run cli -- deploy         # deploys the contract (about 30 s to 2 min)
 bash scripts/demo-local.sh    # register 2 members, open a case (threshold 2), 2 anonymous reports,
-                              # CORROBORATED, then a double report is rejected
+                              # CORROBORATED, then a repeat report is refused (about 3 min of proving)
 npm run cli -- status         # public view, no wallet needed
 ```
 
-No faucet or wallet extension is needed on the local devnet: it pre-funds a genesis wallet. For Preprod, see [Preprod](#preprod).
+The demo script ends with `Demo passed: ... reached CORROBORATED and the repeat report was refused.` and exits non-zero if any step fails. It can be run again on the same chain (each run uses fresh member names and a new case). To start from a clean chain, run `npm run demo:reset` and deploy again.
+
+Measured from a clean clone of this repository on a machine with warm Docker and npm caches: about 5.5 minutes end to end (install 34 s, tests 20 s, devnet 54 s, deploy 27 s, demo 183 s, status 5 s). A first run adds the Docker image download and the Compact install (about 1 minute). No faucet, token, `.env` file or wallet extension is needed on the local devnet: it pre-funds a genesis wallet. For Preprod, see [Preprod](#preprod).
 
 ## Tests
 
@@ -303,6 +308,7 @@ Wave 2 delivers: the Compact contract, 37 passing tests, CI, encrypted report de
 Apache-2.0 (see [LICENSE](LICENSE)). The membership-plus-nullifier pattern follows the public Midnight examples `PrivateVoting.compact` (midnightntwrk/midnight-expert) and `election.compact` (LFDT-Minokawa/compact); the case, threshold and corroboration logic is original. Devnet and wallet wiring in `api/network.ts`, `api/wallet.ts`, `api/wallet-state.ts` and `docker-compose.yml` is adapted from the Midnight `create-mn-app` hello-world template.
 
 Repository topics: `midnightntwrk`, `midnight`, `compact`, `zero-knowledge`.
+
 
 
 

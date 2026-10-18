@@ -26,7 +26,7 @@ const STEPS = [
   {
     n: '03',
     title: 'Run the demo and read the public state',
-    note: 'Registers two members, opens a case, files two anonymous reports, flips the case to CORROBORATED, then shows a repeat report being refused.',
+    note: 'Registers two members, opens a case, files two anonymous reports, flips the case to CORROBORATED, then shows a repeat report being refused. Expect about three minutes: every step builds a real zero-knowledge proof.',
     code: ['bash scripts/demo-local.sh', 'npm run cli -- status'],
   },
 ] as const;
@@ -78,9 +78,11 @@ export default function RunLocally() {
           <h2>Before you start</h2>
           <ul>
             <li>Node.js 22 or newer, and Docker running.</li>
+            <li>Ports 9944, 8088 and 6300 free (stop any other Midnight devnet or proof server first).</li>
+            <li>The first devnet start downloads about 1.8 GB of Docker images, so allow extra time on a slow connection.</li>
             <li>The Compact toolchain, pinned to 0.31.1 (Linux, macOS or WSL2 Ubuntu on Windows):</li>
           </ul>
-          <Code lines={['curl --proto \'=https\' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh', 'compact update 0.31.1']} />
+          <Code lines={['curl --proto \'=https\' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh', 'source "$HOME/.local/bin/env"   # or open a new shell, so compact is on your PATH', 'compact update 0.31.1']} />
         </section>
 
         <ol className="rl__steps">
